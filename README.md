@@ -24,5 +24,5 @@ cargo build
 *wasmdump* is in `target/debug/` directory.
 
 ```bash
-cp target/debug/wasmdump `any/path`
+cp target/debug/wasmdump any/path
 ```
