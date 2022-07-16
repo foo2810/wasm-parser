@@ -8,18 +8,18 @@ use crate::wasm_components::types::{VarUInt32, VarUInt7};
 
 #[derive(Debug)]
 pub struct CustomSection {
-    pub id: u8,
-    pub payload_len: u32,
-    pub name_len: u32,
+    pub id: VarUInt7,
+    pub payload_len: VarUInt32,
+    pub name_len: VarUInt32,
     pub name: String,
     pub payload: Vec<u8>,
 }
 
 #[derive(Debug)]
 pub struct NameSection {
-    pub id: u8,
-    pub payload_len: u32,
-    pub name_len: u32,
+    pub id: VarUInt7,
+    pub payload_len: VarUInt32,
+    pub name_len: VarUInt32,
     pub name: String,
     pub payload: NameSectionPayload,
 }

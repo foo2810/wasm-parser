@@ -4,13 +4,15 @@ use std::str;
 use super::base::{parse_section_common, ParseError};
 
 use crate::readers::{read_unsigned_leb128, read_x};
-use crate::wasm_components::types::{ExternalKind, GlobalType, MemoryType, TableType, VarUInt32};
+use crate::wasm_components::types::{
+    ExternalKind, GlobalType, MemoryType, TableType, VarUInt32, VarUInt7,
+};
 
 #[derive(Debug)]
 pub struct ImportSection {
-    pub id: u8,
-    pub payload_len: u32,
-    pub name_len: Option<u32>,
+    pub id: VarUInt7,
+    pub payload_len: VarUInt32,
+    pub name_len: Option<VarUInt32>,
     pub name: Option<String>,
     pub payload: ImportSectionPayload,
 }

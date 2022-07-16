@@ -46,9 +46,9 @@ pub enum ParseError {
 
 // Common part of all section without CustomSection
 pub struct SectionCommon {
-    pub id: u8,
-    pub payload_len: u32,
-    pub name_len: Option<u32>,
+    pub id: VarUInt7,
+    pub payload_len: VarUInt32,
+    pub name_len: Option<VarUInt32>,
     pub name: Option<String>,
 }
 
