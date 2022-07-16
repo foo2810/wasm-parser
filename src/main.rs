@@ -8,14 +8,8 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-mod readers;
-#[macro_use]
-mod utils;
-mod parser;
-mod wasm_components;
-
-use crate::parser::Parser as WasmParser;
-use crate::wasm_components::sections::ParseError;
+use wasmdump::parser::Parser as WasmParser;
+use wasmdump::wasm_components::sections::ParseError;
 
 use clap::Parser;
 #[derive(Parser)]
