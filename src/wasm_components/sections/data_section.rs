@@ -1,7 +1,8 @@
 use std::io::{BufReader, Read, Seek};
 
-use super::base::parse_section_common;
-use crate::readers::read_8;
+use super::base::{parse_section_common, ParseError};
+
+use crate::readers::{read_8, read_unsigned_leb128};
 use crate::wasm_components::types::{InitExpr, VarUInt32};
 
 #[derive(Debug)]
@@ -28,56 +29,74 @@ pub struct DataSegment {
 }
 
 impl DataSection {
-    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Self {
+    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         // Common reading in all sections //
-        let common = parse_section_common(reader);
+        let common = parse_section_common(reader)?;
         if common.id != 11 {
-            panic!("This Section is not DataSection");
+            // panic!("This Section is not DataSection");
+            return Err(ParseError::FormatError(String::from(
+                "This Section is not DataSection",
+            )));
         }
         // ここまで共通 //
 
-        let payload = DataSectionPayload::parse(reader);
+        let payload = DataSectionPayload::parse(reader)?;
 
-        Self {
+        Ok(Self {
             id: common.id,
             payload_len: common.payload_len,
             name_len: common.name_len,
             name: common.name,
             payload: payload,
-        }
+        })
     }
 }
 
 impl DataSectionPayload {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Self {
-        let count = leb128::read::unsigned(reader).unwrap() as VarUInt32;
+    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+        let mut count: u64 = 0;
+        match read_unsigned_leb128(reader, &mut count) {
+            Ok(rs) => (/* To check read size */),
+            Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+        };
         let mut entries: Vec<DataSegment> = Vec::new();
         for _ in 0..count {
-            entries.push(DataSegment::parse(reader));
+            entries.push(DataSegment::parse(reader)?);
         }
 
-        Self {
-            count: count,
+        Ok(Self {
+            count: count as VarUInt32,
             entries: entries,
-        }
+        })
     }
 }
 
 impl DataSegment {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Self {
-        let index = leb128::read::unsigned(reader).unwrap() as VarUInt32;
-        let offset = InitExpr::parse(reader);
-        let size = leb128::read::unsigned(reader).unwrap() as VarUInt32;
+    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+        let mut index: u64 = 0;
+        match read_unsigned_leb128(reader, &mut index) {
+            Ok(rs) => (/* To check read size */),
+            Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+        };
+        let offset = InitExpr::parse(reader)?;
+        let mut size: u64 = 0;
+        match read_unsigned_leb128(reader, &mut size) {
+            Ok(rs) => (/* To check read size */),
+            Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+        };
         let mut data: Vec<u8> = Vec::new();
         for _ in 0..size {
-            data.push(read_8(reader)[0]);
+            match read_8(reader) {
+                Ok(d) => data.push(d[0]),
+                Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+            };
         }
 
-        Self {
-            index: index,
+        Ok(Self {
+            index: index as VarUInt32,
             offset: offset,
-            size: size,
+            size: size as VarUInt32,
             data: data,
-        }
+        })
     }
 }

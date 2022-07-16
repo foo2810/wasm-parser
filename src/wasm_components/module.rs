@@ -1,4 +1,3 @@
-use core::panic;
 use std::io::{BufReader, Read, Seek};
 
 use crate::parser::Parser;
@@ -22,12 +21,9 @@ pub struct WasmModule {
 }
 
 impl WasmModule {
-    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Self {
+    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut parser = Parser::new(reader);
-        match parser.parse_all() {
-            Ok(module) => module,
-            Err(msg) => panic!(" > Error: {}", msg),
-        }
+        Ok(parser.parse_all()?)
     }
 
     pub fn empty(mv: &MagicAndVersion) -> Self {

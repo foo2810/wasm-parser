@@ -15,6 +15,7 @@ mod parser;
 mod wasm_components;
 
 use crate::parser::Parser as WasmParser;
+use crate::wasm_components::sections::ParseError;
 
 use clap::Parser;
 #[derive(Parser)]
@@ -58,6 +59,10 @@ fn main() {
 
     let _ = match parser.parse_all() {
         Ok(module) => module,
-        Err(msg) => panic!("> Error: {}", msg),
+        Err(err) => match err {
+            ParseError::ReaderError(msg) => panic!(" > Error: {}", msg),
+            ParseError::FormatError(msg) => panic!(" > Error: {}", msg),
+            ParseError::UnexpectedError(msg) => panic!(" > Error: {}", msg),
+        },
     };
 }

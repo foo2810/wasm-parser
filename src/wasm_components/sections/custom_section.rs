@@ -1,9 +1,9 @@
-use std::io::{BufReader, Read, Seek, SeekFrom};
+use std::io::{BufReader, Read, Seek};
 use std::str;
 
-use super::base::parse_section_common;
+use super::base::{parse_section_common, ParseError};
 
-use crate::readers::read_x;
+use crate::readers::{read_unsigned_leb128, read_x};
 use crate::wasm_components::types::{VarUInt32, VarUInt7};
 
 #[derive(Debug)]
@@ -32,33 +32,46 @@ pub struct NameSectionPayload {
 }
 
 impl CustomSection {
-    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Self {
-        let common = parse_section_common(reader);
+    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+        let common = parse_section_common(reader)?;
         if common.id != 0 {
-            panic!("This Section is not CustomSection");
+            // panic!("This Section is not CustomSection");
+            return Err(ParseError::FormatError(String::from(
+                "This Section is not CustomSection",
+            )));
         }
 
-        let s_offset = reader.seek(SeekFrom::Current(0)).unwrap();
-        let nl = leb128::read::unsigned(reader).unwrap() as usize;
-        let e_offset = reader.seek(SeekFrom::Current(0)).unwrap();
-        let sizeof_name_len = (e_offset - s_offset) as i64;
+        let mut nl = 0;
+        let sizeof_name_len: i64;
+        match read_unsigned_leb128(reader, &mut nl) {
+            Ok(rs) => sizeof_name_len = rs as i64,
+            Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+        }
 
         let name_len = nl as u32;
 
-        let s_offset = reader.seek(SeekFrom::Current(0)).unwrap();
-        let name = String::from(str::from_utf8(&read_x(reader, nl)).unwrap());
-        let e_offset = reader.seek(SeekFrom::Current(0)).unwrap();
-        let sizeof_name = (e_offset - s_offset) as i64;
+        let name: String;
+        match read_x(reader, nl as usize) {
+            Ok(data) => match str::from_utf8(&data) {
+                Ok(s) => name = String::from(s),
+                Err(err) => return Err(ParseError::FormatError(format!("{:?}", err))),
+            },
+            Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+        };
+        let sizeof_name = name_len as i64;
 
         let payload_size = common.payload_len as i64 - sizeof_name - sizeof_name_len;
-        let payload = read_x(reader, payload_size as usize);
+        let payload = match read_x(reader, payload_size as usize) {
+            Ok(data) => data,
+            Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+        };
 
-        Self {
+        Ok(Self {
             id: common.id,
             payload_len: common.payload_len,
             name_len: name_len,
             name: name,
             payload: payload,
-        }
+        })
     }
 }

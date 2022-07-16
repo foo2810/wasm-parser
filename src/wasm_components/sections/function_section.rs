@@ -1,6 +1,8 @@
 use std::io::{BufReader, Read, Seek};
 
-use super::base::parse_section_common;
+use super::base::{parse_section_common, ParseError};
+
+use crate::readers::read_unsigned_leb128;
 use crate::wasm_components::types::VarUInt32;
 
 #[derive(Debug)]
@@ -19,37 +21,50 @@ pub struct FunctionSectionPayload {
 }
 
 impl FunctionSection {
-    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Self {
+    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         // Common reading in all sections //
-        let common = parse_section_common(reader);
+        let common = parse_section_common(reader)?;
         if common.id != 3 {
-            panic!("This Section is not FunctionSection")
+            // panic!("This Section is not FunctionSection")
+            return Err(ParseError::FormatError(String::from(
+                "This Section is not FunctionSection",
+            )));
         }
         // ここまで共通 //
 
-        let payload = FunctionSectionPayload::parse(reader);
+        let payload = FunctionSectionPayload::parse(reader)?;
 
-        Self {
+        Ok(Self {
             id: common.id,
             payload_len: common.payload_len,
             name_len: common.name_len,
             name: common.name,
             payload: payload,
-        }
+        })
     }
 }
 
 impl FunctionSectionPayload {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Self {
-        let count = leb128::read::unsigned(reader).unwrap() as VarUInt32;
+    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+        let mut count: u64 = 0;
+        match read_unsigned_leb128(reader, &mut count) {
+            Ok(rs) => (/* To check read size */),
+            Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+        };
+
         let mut types: Vec<VarUInt32> = Vec::new();
         for _ in 0..count {
-            types.push(leb128::read::unsigned(reader).unwrap() as VarUInt32);
+            let mut ty = 0;
+            match read_unsigned_leb128(reader, &mut ty) {
+                Ok(rs) => (/* To check read size */),
+                Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+            };
+            types.push(ty as VarUInt32);
         }
 
-        Self {
-            count: count,
+        Ok(Self {
+            count: count as VarUInt32,
             types: types,
-        }
+        })
     }
 }

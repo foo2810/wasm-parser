@@ -18,9 +18,9 @@ impl<'a, R: Read + Seek> Parser<'a, R> {
     }
 
     // readerを使って、バイナリを順に読んでいき、読み込んだ値をデータ構造に落とし込む
-    pub fn parse_all(&mut self) -> Result<WasmModule, String> {
+    pub fn parse_all(&mut self) -> Result<WasmModule, ParseError> {
         // Read magic(4 bytes) and version(4 bytes)
-        let magic_and_version = MagicAndVersion::parse(self.reader);
+        let magic_and_version = MagicAndVersion::parse(self.reader)?;
         println!("Magic and Version:\n{:?}", magic_and_version);
 
         let mut module = WasmModule::empty(&magic_and_version);
@@ -37,52 +37,52 @@ impl<'a, R: Read + Seek> Parser<'a, R> {
 
             match section_id {
                 1 => {
-                    let type_section = TypeSection::parse(self.reader);
+                    let type_section = TypeSection::parse(self.reader)?;
                     println!("TypeSection:\n{:?}\n", type_section);
                     module.type_section = Some(type_section);
                 }
                 2 => {
-                    let import_section = ImportSection::parse(self.reader);
+                    let import_section = ImportSection::parse(self.reader)?;
                     println!("ImportSection:\n{:?}\n", import_section);
                     module.import_section = Some(import_section);
                 }
                 3 => {
-                    let function_section = FunctionSection::parse(self.reader);
+                    let function_section = FunctionSection::parse(self.reader)?;
                     println!("FunctionSection:\n{:?}\n", function_section);
                     module.function_section = Some(function_section);
                 }
                 4 => {
-                    let table_section = TableSection::parse(self.reader);
+                    let table_section = TableSection::parse(self.reader)?;
                     println!("TableSection:\n{:?}\n", table_section);
                     module.table_section = Some(table_section);
                 }
                 5 => {
-                    let memory_section = MemorySection::parse(self.reader);
+                    let memory_section = MemorySection::parse(self.reader)?;
                     println!("MemorySection:\n{:?}\n", memory_section);
                     module.memory_section = Some(memory_section);
                 }
                 6 => {
-                    let global_section = GlobalSection::parse(self.reader);
+                    let global_section = GlobalSection::parse(self.reader)?;
                     println!("GlobalSection:\n{:?}\n", global_section);
                     module.global_section = Some(global_section);
                 }
                 7 => {
-                    let export_section = ExportSection::parse(self.reader);
+                    let export_section = ExportSection::parse(self.reader)?;
                     println!("ExportSection:\n{:?}\n", export_section);
                     module.export_section = Some(export_section);
                 }
                 8 => {
-                    let start_section = StartSection::parse(self.reader);
+                    let start_section = StartSection::parse(self.reader)?;
                     println!("StartSection:\n{:?}\n", start_section);
                     module.start_section = Some(start_section);
                 }
                 9 => {
-                    let element_section = ElementSection::parse(self.reader);
+                    let element_section = ElementSection::parse(self.reader)?;
                     println!("ElementSection:\n{:?}\n", element_section);
                     module.element_section = Some(element_section);
                 }
                 10 => {
-                    let code_section = CodeSection::parse(self.reader);
+                    let code_section = CodeSection::parse(self.reader)?;
                     // println!("CodeSection:\n{:?}\n", code_section);
                     println!(
                         "CodeSection:\nCodeSection {{ id: {}, payload_len: {} }}\nSkip (too large)\n",
@@ -91,7 +91,7 @@ impl<'a, R: Read + Seek> Parser<'a, R> {
                     module.code_section = Some(code_section);
                 }
                 11 => {
-                    let data_section = DataSection::parse(self.reader);
+                    let data_section = DataSection::parse(self.reader)?;
                     // println!("DataSection:\n{:?}\n", data_section);
                     println!(
                         "DataSection:\nDataSection {{ id: {}, payload_len: {} }}\nSkip (too large)\n",
@@ -100,7 +100,7 @@ impl<'a, R: Read + Seek> Parser<'a, R> {
                     module.data_section = Some(data_section);
                 }
                 0 => {
-                    let custom_section = CustomSection::parse(self.reader);
+                    let custom_section = CustomSection::parse(self.reader)?;
                     // println!("CustomSection:\n{:?}\n", custom_section);
                     println!(
                         "CustomSection: '{}'\nSkip (too large and not parsed)\n",

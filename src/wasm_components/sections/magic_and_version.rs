@@ -1,6 +1,7 @@
 use byteorder::{ByteOrder, LittleEndian};
 use std::io::{BufReader, Read};
 
+use super::base::ParseError;
 use crate::readers::read_32;
 
 #[derive(Debug, Clone)]
@@ -10,14 +11,20 @@ pub struct MagicAndVersion {
     pub version: usize,
 }
 impl MagicAndVersion {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Self {
-        let magic_buf: [u8; 4] = read_32(reader);
-        let version_buf: [u8; 4] = read_32(reader);
+    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+        let magic_buf: [u8; 4] = match read_32(reader) {
+            Ok(data) => data,
+            Err(err) => return Err(ParseError::ReaderError(format!("{}", err))),
+        };
+        let version_buf: [u8; 4] = match read_32(reader) {
+            Ok(data) => data,
+            Err(err) => return Err(ParseError::ReaderError(format!("{}", err))),
+        };
         let v = LittleEndian::read_u32(&version_buf);
 
-        Self {
+        Ok(Self {
             magic: magic_buf,
             version: v as usize,
-        }
+        })
     }
 }

@@ -16,6 +16,7 @@ mod start_section;
 mod table_section;
 mod type_section;
 
+pub use self::base::ParseError;
 pub use self::base::Section;
 pub use self::code_section::*;
 pub use self::custom_section::*;

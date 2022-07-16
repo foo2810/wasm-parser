@@ -1,6 +1,8 @@
 use std::io::{BufReader, Read, Seek};
 
-use super::base::parse_section_common;
+use super::base::{parse_section_common, ParseError};
+
+use crate::readers::read_unsigned_leb128;
 use crate::wasm_components::types::{GlobalType, InitExpr, VarUInt32};
 
 #[derive(Debug)]
@@ -25,49 +27,56 @@ pub struct GlobalVariable {
 }
 
 impl GlobalSection {
-    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Self {
+    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         // Common reading in all sections //
-        let common = parse_section_common(reader);
+        let common = parse_section_common(reader)?;
         if common.id != 6 {
-            panic!("This Section is not GlobalSection")
+            // panic!("This Section is not GlobalSection")
+            return Err(ParseError::FormatError(String::from(
+                "This Section is not GlobalSection",
+            )));
         }
         // ここまで共通 //
 
-        let payload = GlobalSectionPayload::parse(reader);
+        let payload = GlobalSectionPayload::parse(reader)?;
 
-        Self {
+        Ok(Self {
             id: common.id,
             payload_len: common.payload_len,
             name_len: common.name_len,
             name: common.name,
             payload: payload,
-        }
+        })
     }
 }
 
 impl GlobalSectionPayload {
-    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Self {
-        let count = leb128::read::unsigned(reader).unwrap() as VarUInt32;
+    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+        let mut count: u64 = 0;
+        match read_unsigned_leb128(reader, &mut count) {
+            Ok(rs) => (/* To check read size */),
+            Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+        };
         let mut globals: Vec<GlobalVariable> = Vec::new();
         for _ in 0..count {
-            globals.push(GlobalVariable::parse(reader));
+            globals.push(GlobalVariable::parse(reader)?);
         }
 
-        Self {
-            count: count,
+        Ok(Self {
+            count: count as VarUInt32,
             globals: globals,
-        }
+        })
     }
 }
 
 impl GlobalVariable {
-    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Self {
-        let global_type = GlobalType::parse(reader);
-        let init_expr = InitExpr::parse(reader);
+    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+        let global_type = GlobalType::parse(reader)?;
+        let init_expr = InitExpr::parse(reader)?;
 
-        Self {
+        Ok(Self {
             type_: global_type,
             init: init_expr,
-        }
+        })
     }
 }
