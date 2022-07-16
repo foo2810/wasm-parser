@@ -1,6 +1,8 @@
 use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::str;
 
+use super::base::parse_section_common;
+
 use crate::readers::read_x;
 use crate::wasm_components::types::{VarUInt32, VarUInt7};
 
@@ -31,11 +33,10 @@ pub struct NameSectionPayload {
 
 impl CustomSection {
     pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Self {
-        let id = leb128::read::unsigned(reader).unwrap() as u8;
-        if id != 0 {
+        let common = parse_section_common(reader);
+        if common.id != 0 {
             panic!("This Section is not CustomSection");
         }
-        let payload_len = leb128::read::unsigned(reader).unwrap() as u32;
 
         let s_offset = reader.seek(SeekFrom::Current(0)).unwrap();
         let nl = leb128::read::unsigned(reader).unwrap() as usize;
@@ -49,12 +50,12 @@ impl CustomSection {
         let e_offset = reader.seek(SeekFrom::Current(0)).unwrap();
         let sizeof_name = (e_offset - s_offset) as i64;
 
-        let payload_size = payload_len as i64 - sizeof_name - sizeof_name_len;
+        let payload_size = common.payload_len as i64 - sizeof_name - sizeof_name_len;
         let payload = read_x(reader, payload_size as usize);
 
         Self {
-            id: id,
-            payload_len: payload_len,
+            id: common.id,
+            payload_len: common.payload_len,
             name_len: name_len,
             name: name,
             payload: payload,
