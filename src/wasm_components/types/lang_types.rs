@@ -40,7 +40,7 @@ impl LangTypes {
             -0x10 => Ok(LangTypes::ANYFUNC),
             -0x20 => Ok(LangTypes::FUNC),
             -0x40 => Ok(LangTypes::PSEUDO),
-            _ => Err(ParseError::FormatError(format!("unknown type: v={}", v)))  // panic!("unknown type: v={}", v),
+            _ => Err(ParseError::FormatError(format!("unknown type: v={}", v))), // panic!("unknown type: v={}", v),
         }
     }
 }
@@ -60,7 +60,7 @@ impl ValueType {
                     "{:?} is not value type",
                     vt
                 )))
-            },
+            }
             _ => Ok(Self { value: vt }),
         }
     }
