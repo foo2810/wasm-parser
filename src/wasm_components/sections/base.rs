@@ -59,13 +59,13 @@ impl SectionCommon {
     pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<SectionCommon, ParseError> {
         let mut id = 0; // VarUInt7
         match read_unsigned_leb128(reader, &mut id) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
         let mut payload_len = 0;
         match read_unsigned_leb128(reader, &mut payload_len) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 

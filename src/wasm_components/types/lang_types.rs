@@ -161,13 +161,13 @@ impl FuncType {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut form = 0;
         match read_signed_leb128(reader, &mut form) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
         let mut param_count = 0; // VarUInt32
         match read_unsigned_leb128(reader, &mut param_count) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -178,7 +178,7 @@ impl FuncType {
 
         let mut return_count = 0; // VarUInt1
         match read_unsigned_leb128(reader, &mut return_count) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -230,7 +230,7 @@ impl GlobalType {
         // 0 if immutable, 1 if mutable
         let mut mutability = 0; // VarUInt1
         match read_unsigned_leb128(reader, &mut mutability) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -303,13 +303,13 @@ impl ResizableLimits {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut flags = 0; // VarUInt1
         match read_unsigned_leb128(reader, &mut flags) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
         let mut initial = 0; // VarUInt32
         match read_unsigned_leb128(reader, &mut initial) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -317,7 +317,7 @@ impl ResizableLimits {
         if flags == 1 {
             let mut m = 0; // Option<VarUInt32>
             match read_unsigned_leb128(reader, &mut m) {
-                Ok(rs) => (/* To check read size */),
+                Ok(_rs) => (/* To check read size */),
                 Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
             }
             maximum = Some(m as VarUInt32);

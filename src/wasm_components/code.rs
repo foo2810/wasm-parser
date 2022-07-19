@@ -1,4 +1,4 @@
-use std::io::{BufReader, Read, Seek, SeekFrom};
+use std::io::{BufReader, Read, Seek};
 
 use crate::readers::usage_bytes_leb128_u;
 use crate::readers::{read_8, read_unsigned_leb128, read_x};
@@ -48,7 +48,7 @@ impl FunctionBody {
         // body_sizeはFunctionBodyのbody_sizeフィールドを除く部分のバイト数を表す
         let mut body_size: u64 = 0; // VarUInt32
         match read_unsigned_leb128(reader, &mut body_size) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -125,7 +125,7 @@ impl LocalEntry {
         // let count = leb128::read::unsigned(reader).unwrap() as VarUInt32;
         let mut count = 0; // VarUInt32
         match read_unsigned_leb128(reader, &mut count) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
         let type_ = ValueType::parse(reader)?;

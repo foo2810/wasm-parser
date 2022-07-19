@@ -60,7 +60,7 @@ impl ElementSectionPayload {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
         match read_unsigned_leb128(reader, &mut count) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -89,7 +89,7 @@ impl ElementSegment {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut index: u64 = 0;
         match read_unsigned_leb128(reader, &mut index) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -97,7 +97,7 @@ impl ElementSegment {
 
         let mut num_elem: u64 = 0;
         match read_unsigned_leb128(reader, &mut num_elem) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -105,7 +105,7 @@ impl ElementSegment {
         for _ in 0..num_elem {
             let mut e = 0;
             match read_unsigned_leb128(reader, &mut e) {
-                Ok(rs) => (/* To check read size */),
+                Ok(_rs) => (/* To check read size */),
                 Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
             }
             elems.push(e as VarUInt32);

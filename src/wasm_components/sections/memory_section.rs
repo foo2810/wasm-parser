@@ -48,7 +48,7 @@ impl MemorySectionPayload {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
         match read_unsigned_leb128(reader, &mut count) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
         let mut entries: Vec<MemoryType> = Vec::new();

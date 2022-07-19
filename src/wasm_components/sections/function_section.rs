@@ -52,7 +52,7 @@ impl FunctionSectionPayload {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
         match read_unsigned_leb128(reader, &mut count) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -60,7 +60,7 @@ impl FunctionSectionPayload {
         for _ in 0..count {
             let mut ty = 0;
             match read_unsigned_leb128(reader, &mut ty) {
-                Ok(rs) => (/* To check read size */),
+                Ok(_rs) => (/* To check read size */),
                 Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
             };
             types.push(ty as VarUInt32);

@@ -60,7 +60,7 @@ impl DataSectionPayload {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
         match read_unsigned_leb128(reader, &mut count) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
         let mut entries: Vec<DataSegment> = Vec::new();
@@ -88,13 +88,13 @@ impl DataSegment {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut index: u64 = 0;
         match read_unsigned_leb128(reader, &mut index) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
         let offset = InitExpr::parse(reader)?;
         let mut size: u64 = 0;
         match read_unsigned_leb128(reader, &mut size) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
         let mut data: Vec<u8> = Vec::new();

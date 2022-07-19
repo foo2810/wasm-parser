@@ -71,7 +71,7 @@ impl ImportSectionPayload {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
         match read_unsigned_leb128(reader, &mut count) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -100,7 +100,7 @@ impl ImportEntry {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut module_len: u64 = 0;
         match read_unsigned_leb128(reader, &mut module_len) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -114,7 +114,7 @@ impl ImportEntry {
 
         let mut field_len = 0;
         match read_unsigned_leb128(reader, &mut field_len) {
-            Ok(rs) => (/* To check read size */),
+            Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
@@ -167,7 +167,7 @@ impl TypeEntry {
             ExternalKind::Function => {
                 let mut type_ = 0;
                 match read_unsigned_leb128(reader, &mut type_) {
-                    Ok(rs) => (/* To check read size */),
+                    Ok(_rs) => (/* To check read size */),
                     Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
                 };
                 Ok(TypeEntry::FuncIndex {
