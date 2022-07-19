@@ -1,16 +1,13 @@
 use std::io::{BufReader, Read, Seek};
 
-use super::base::{parse_section_common, ParseError};
+use super::base::{ParseError, SectionCommon};
 
 use crate::readers::read_unsigned_leb128;
-use crate::wasm_components::types::{GlobalType, InitExpr, VarUInt32, VarUInt7};
+use crate::wasm_components::types::{GlobalType, InitExpr, VarUInt32};
 
 #[derive(Debug)]
 pub struct GlobalSection {
-    pub id: VarUInt7,
-    pub payload_len: VarUInt32,
-    pub name_len: Option<VarUInt32>,
-    pub name: Option<String>,
+    pub common: SectionCommon,
     pub payload: GlobalSectionPayload,
 }
 
@@ -29,7 +26,7 @@ pub struct GlobalVariable {
 impl GlobalSection {
     pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         // Common reading in all sections //
-        let common = parse_section_common(reader)?;
+        let common = SectionCommon::parse(reader)?;
         if common.id != 6 {
             // panic!("This Section is not GlobalSection")
             return Err(ParseError::FormatError(String::from(
@@ -41,10 +38,7 @@ impl GlobalSection {
         let payload = GlobalSectionPayload::parse(reader)?;
 
         Ok(Self {
-            id: common.id,
-            payload_len: common.payload_len,
-            name_len: common.name_len,
-            name: common.name,
+            common: common,
             payload: payload,
         })
     }

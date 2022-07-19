@@ -1,26 +1,20 @@
 use std::io::{BufReader, Read, Seek};
 use std::str;
 
-use super::base::{parse_section_common, ParseError};
+use super::base::{ParseError, SectionCommon};
 
 use crate::readers::{read_unsigned_leb128, read_x};
 use crate::wasm_components::types::{VarUInt32, VarUInt7};
 
 #[derive(Debug)]
 pub struct CustomSection {
-    pub id: VarUInt7,
-    pub payload_len: VarUInt32,
-    pub name_len: VarUInt32,
-    pub name: String,
+    pub common: SectionCommon,
     pub payload: Vec<u8>,
 }
 
 #[derive(Debug)]
 pub struct NameSection {
-    pub id: VarUInt7,
-    pub payload_len: VarUInt32,
-    pub name_len: VarUInt32,
-    pub name: String,
+    pub common: SectionCommon,
     pub payload: NameSectionPayload,
 }
 
@@ -33,7 +27,7 @@ pub struct NameSectionPayload {
 
 impl CustomSection {
     pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
-        let common = parse_section_common(reader)?;
+        let common = SectionCommon::parse(reader)?;
         if common.id != 0 {
             // panic!("This Section is not CustomSection");
             return Err(ParseError::FormatError(String::from(
@@ -67,10 +61,7 @@ impl CustomSection {
         };
 
         Ok(Self {
-            id: common.id,
-            payload_len: common.payload_len,
-            name_len: name_len,
-            name: name,
+            common: common,
             payload: payload,
         })
     }

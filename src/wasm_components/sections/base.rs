@@ -45,6 +45,7 @@ pub enum ParseError {
 }
 
 // Common part of all section without CustomSection
+#[derive(Debug)]
 pub struct SectionCommon {
     pub id: VarUInt7,
     pub payload_len: VarUInt32,
@@ -52,25 +53,26 @@ pub struct SectionCommon {
     pub name: Option<String>,
 }
 
-pub fn parse_section_common<R: Read + Seek>(
-    reader: &mut BufReader<R>,
-) -> Result<SectionCommon, ParseError> {
-    let mut id = 0; // VarUInt7
-    match read_unsigned_leb128(reader, &mut id) {
-        Ok(rs) => (/* To check read size */),
-        Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
-    };
+impl SectionCommon {
+    // pub fn SectionCommon<R: Read + Seek>(
+    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<SectionCommon, ParseError> {
+        let mut id = 0; // VarUInt7
+        match read_unsigned_leb128(reader, &mut id) {
+            Ok(rs) => (/* To check read size */),
+            Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+        };
 
-    let mut payload_len = 0;
-    match read_unsigned_leb128(reader, &mut payload_len) {
-        Ok(rs) => (/* To check read size */),
-        Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
-    };
+        let mut payload_len = 0;
+        match read_unsigned_leb128(reader, &mut payload_len) {
+            Ok(rs) => (/* To check read size */),
+            Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
+        };
 
-    Ok(SectionCommon {
-        id: id as VarUInt7,
-        payload_len: payload_len as VarUInt32,
-        name_len: None,
-        name: None,
-    })
+        Ok(SectionCommon {
+            id: id as VarUInt7,
+            payload_len: payload_len as VarUInt32,
+            name_len: None,
+            name: None,
+        })
+    }
 }
