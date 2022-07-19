@@ -27,7 +27,7 @@ pub struct NameSectionPayload {
 
 impl CustomSection {
     pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
-        let common = SectionCommon::parse(reader)?;
+        let mut common = SectionCommon::parse(reader)?;
         if common.id != 0 {
             // panic!("This Section is not CustomSection");
             return Err(ParseError::FormatError(String::from(
@@ -59,6 +59,9 @@ impl CustomSection {
             Ok(data) => data,
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
+
+        common.name = Some(name);
+        common.name_len = Some(name_len);
 
         Ok(Self {
             common: common,
