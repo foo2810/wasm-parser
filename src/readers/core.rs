@@ -77,7 +77,7 @@ pub fn read_signed_leb128<R: Read>(
 fn usage_bytes_leb128_u(value: u64) -> u8 {
     let mut ord: u8 = 1;
     let base: i64 = 2;
-    while (value as i64) > base.pow(7 * (ord as u32)) {
+    while (value as i64) >= base.pow(7 * (ord as u32)) {
         ord += 1;
     }
 
@@ -92,7 +92,7 @@ fn usage_bytes_leb128_s(value: i64) -> u8 {
     let value = if value >= 0 { value } else { -(value + 1) };
 
     let sign_bit: u32 = 1;
-    while value > base.pow(7 * (ord as u32) - sign_bit) {
+    while value >= base.pow(7 * (ord as u32) - sign_bit) {
         ord += 1;
     }
 
