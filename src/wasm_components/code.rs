@@ -1,6 +1,8 @@
 use std::io::{BufReader, Read, Seek, SeekFrom};
 
+use crate::readers::usage_bytes_leb128_u;
 use crate::readers::{read_8, read_unsigned_leb128, read_x};
+use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::sections::ParseError;
 
 use super::types::{ValueType, VarUInt32};
@@ -35,6 +37,12 @@ impl Expr {
     }
 }
 
+impl Sizeof for Expr {
+    fn sizeof(&self) -> u32 {
+        self.bytes.len() as u32
+    }
+}
+
 impl FunctionBody {
     pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         // body_sizeはFunctionBodyのbody_sizeフィールドを除く部分のバイト数を表す
@@ -60,12 +68,13 @@ impl FunctionBody {
         // let sizeof_local_count = (e_offset - s_offset) as i64;
 
         let mut locals: Vec<LocalEntry> = Vec::new();
-        let s_offset = reader.seek(SeekFrom::Current(0)).unwrap();
+        // let s_offset = reader.seek(SeekFrom::Current(0)).unwrap();
         for _ in 0..local_count {
             locals.push(LocalEntry::parse(reader)?);
         }
-        let e_offset = reader.seek(SeekFrom::Current(0)).unwrap();
-        let sizeof_locals = (e_offset - s_offset) as i64; // sizeof_local_countと同様
+        // let e_offset = reader.seek(SeekFrom::Current(0)).unwrap();
+        // let sizeof_locals = (e_offset - s_offset) as i64; // sizeof_local_countと同様
+        let sizeof_locals: i64 = locals.iter().map(|x| -> i64 { x.sizeof() as i64 }).sum();
 
         // code_size = body_size - sizeof(local_count)- sizeof(locals) - sizeof(end)
         let code_size = (body_size as i64) - sizeof_local_count - sizeof_locals - 1;
@@ -99,6 +108,18 @@ impl FunctionBody {
     }
 }
 
+impl Sizeof for FunctionBody {
+    fn sizeof(&self) -> u32 {
+        let sizeof_body_size: u32 = usage_bytes_leb128_u(self.body_size as u64) as u32;
+        let sizeof_local_count: u32 = usage_bytes_leb128_u(self.local_count as u64) as u32;
+        let sizeof_locals: u32 = self.locals.iter().map(|x| x.sizeof()).sum();
+        let sizeof_code: u32 = self.code.len() as u32;
+        let sizeof_end: u32 = 1;
+
+        sizeof_body_size + sizeof_local_count + sizeof_locals + sizeof_code + sizeof_end
+    }
+}
+
 impl LocalEntry {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         // let count = leb128::read::unsigned(reader).unwrap() as VarUInt32;
@@ -113,6 +134,15 @@ impl LocalEntry {
             count: count as VarUInt32,
             type_: type_,
         })
+    }
+}
+
+impl Sizeof for LocalEntry {
+    fn sizeof(&self) -> u32 {
+        let sizeof_count: u32 = usage_bytes_leb128_u(self.count as u64) as u32;
+        let sizeof_type: u32 = self.type_.sizeof();
+
+        sizeof_count + sizeof_type
     }
 }
 

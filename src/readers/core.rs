@@ -74,7 +74,7 @@ pub fn read_signed_leb128<R: Read>(
     Ok(usage_bytes_leb128_s(*buffer))
 }
 
-fn usage_bytes_leb128_u(value: u64) -> u8 {
+pub fn usage_bytes_leb128_u(value: u64) -> u8 {
     let mut ord: u8 = 1;
     let base: i64 = 2;
     while (value as i64) >= base.pow(7 * (ord as u32)) {
@@ -84,7 +84,7 @@ fn usage_bytes_leb128_u(value: u64) -> u8 {
     ord
 }
 
-fn usage_bytes_leb128_s(value: i64) -> u8 {
+pub fn usage_bytes_leb128_s(value: i64) -> u8 {
     let mut ord: u8 = 1;
     let base: i64 = 2;
 

@@ -3,6 +3,7 @@ use std::io::{BufReader, Read};
 
 use super::base::ParseError;
 use crate::readers::read_32;
+use crate::wasm_components::base::Sizeof;
 
 #[derive(Debug, Clone)]
 pub struct MagicAndVersion {
@@ -26,5 +27,14 @@ impl MagicAndVersion {
             magic: magic_buf,
             version: v as usize,
         })
+    }
+}
+
+impl Sizeof for MagicAndVersion {
+    fn sizeof(&self) -> u32 {
+        let sizeof_magic: u32 = 4;
+        let sizeof_version = 4;
+
+        sizeof_magic + sizeof_version
     }
 }

@@ -3,7 +3,8 @@ use std::str;
 
 use super::base::{ParseError, SectionCommon};
 
-use crate::readers::{read_unsigned_leb128, read_x};
+use crate::readers::{read_unsigned_leb128, read_x, usage_bytes_leb128_u};
+use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::types::{ExternalKind, GlobalType, MemoryType, TableType, VarUInt32};
 
 #[derive(Debug)]
@@ -57,6 +58,15 @@ impl ImportSection {
     }
 }
 
+impl Sizeof for ImportSection {
+    fn sizeof(&self) -> u32 {
+        let sizeof_common = self.common.sizeof();
+        let sizeof_payload = self.payload.sizeof();
+
+        sizeof_common + sizeof_payload
+    }
+}
+
 impl ImportSectionPayload {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
@@ -74,6 +84,15 @@ impl ImportSectionPayload {
             count: count as VarUInt32,
             entries: import_entries,
         })
+    }
+}
+
+impl Sizeof for ImportSectionPayload {
+    fn sizeof(&self) -> u32 {
+        let sizeof_count = usage_bytes_leb128_u(self.count as u64) as u32;
+        let sizeof_entries: u32 = self.entries.iter().map(|x| x.sizeof()).sum();
+
+        sizeof_count + sizeof_entries
     }
 }
 
@@ -121,6 +140,24 @@ impl ImportEntry {
     }
 }
 
+impl Sizeof for ImportEntry {
+    fn sizeof(&self) -> u32 {
+        let sizeof_module_len = usage_bytes_leb128_u(self.module_len as u64) as u32;
+        let sizeof_module_str = self.module_len as u32;
+        let sizeof_field_len = usage_bytes_leb128_u(self.field_len as u64) as u32;
+        let sizeof_str = self.field_len as u32;
+        let sizeof_kind = self.kind.sizeof();
+        let sizeof_type = self.type_.sizeof();
+
+        sizeof_module_len
+            + sizeof_module_str
+            + sizeof_field_len
+            + sizeof_str
+            + sizeof_kind
+            + sizeof_type
+    }
+}
+
 impl TypeEntry {
     pub fn parse<R: Read>(
         reader: &mut BufReader<R>,
@@ -149,6 +186,17 @@ impl TypeEntry {
                 let global_type = GlobalType::parse(reader)?;
                 Ok(TypeEntry::GblType { type_: global_type })
             }
+        }
+    }
+}
+
+impl Sizeof for TypeEntry {
+    fn sizeof(&self) -> u32 {
+        match self {
+            TypeEntry::FuncIndex { type_ } => usage_bytes_leb128_u(*type_ as u64) as u32,
+            TypeEntry::TblType { type_ } => type_.sizeof(),
+            TypeEntry::MemType { type_ } => type_.sizeof(),
+            TypeEntry::GblType { type_ } => type_.sizeof(),
         }
     }
 }

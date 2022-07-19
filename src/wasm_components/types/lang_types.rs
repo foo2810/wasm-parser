@@ -1,6 +1,8 @@
 use std::io::{BufReader, Read};
 
+use crate::readers::usage_bytes_leb128_u;
 use crate::readers::{read_8, read_signed_leb128, read_unsigned_leb128};
+use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::code::Expr;
 use crate::wasm_components::sections::ParseError;
 use crate::wasm_components::types::number_types::*;
@@ -76,6 +78,12 @@ impl ValueType {
     }
 }
 
+impl Sizeof for ValueType {
+    fn sizeof(&self) -> u32 {
+        1
+    }
+}
+
 // pub type BlockType = LangTypes;
 #[derive(Debug)]
 pub struct BlockType {
@@ -102,6 +110,12 @@ impl BlockType {
     }
 }
 
+impl Sizeof for BlockType {
+    fn sizeof(&self) -> u32 {
+        1
+    }
+}
+
 // pub type ElemType = LangTypes;
 #[derive(Debug)]
 pub struct ElemType {
@@ -125,6 +139,12 @@ impl ElemType {
             Ok(_) => Ok(Self::new(v as VarInt7)?),
             Err(err) => Err(ParseError::ReaderError(format!("{:?}", err))),
         }
+    }
+}
+
+impl Sizeof for ElemType {
+    fn sizeof(&self) -> u32 {
+        1
     }
 }
 
@@ -179,6 +199,26 @@ impl FuncType {
     }
 }
 
+impl Sizeof for FuncType {
+    fn sizeof(&self) -> u32 {
+        let sizeof_form: u32 = 1;
+        let sizeof_param_count: u32 = usage_bytes_leb128_u(self.param_count as u64) as u32;
+        let sizeof_param_types: u32 = self.param_types.iter().map(|x| x.sizeof()).sum();
+        let sizeof_return_count: u32 = 1;
+        let sizeof_return_type: u32 = if self.return_type.is_some() {
+            self.return_type.as_ref().unwrap().sizeof()
+        } else {
+            0
+        };
+
+        sizeof_form
+            + sizeof_param_count
+            + sizeof_param_types
+            + sizeof_return_count
+            + sizeof_return_type
+    }
+}
+
 #[derive(Debug)]
 pub struct GlobalType {
     pub content_type: ValueType,
@@ -201,6 +241,15 @@ impl GlobalType {
     }
 }
 
+impl Sizeof for GlobalType {
+    fn sizeof(&self) -> u32 {
+        let sizeof_content_type = self.content_type.sizeof();
+        let sizeof_mutability: u32 = 1;
+
+        sizeof_content_type + sizeof_mutability
+    }
+}
+
 #[derive(Debug)]
 pub struct TableType {
     pub element_type: ElemType,
@@ -218,6 +267,15 @@ impl TableType {
     }
 }
 
+impl Sizeof for TableType {
+    fn sizeof(&self) -> u32 {
+        let sizeof_element_type = self.element_type.sizeof();
+        let sizeof_limits = self.limits.sizeof();
+
+        sizeof_element_type + sizeof_limits
+    }
+}
+
 #[derive(Debug)]
 pub struct MemoryType {
     pub limits: ResizableLimits,
@@ -226,6 +284,12 @@ impl MemoryType {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let limits = ResizableLimits::parse(reader)?;
         Ok(Self { limits: limits })
+    }
+}
+
+impl Sizeof for MemoryType {
+    fn sizeof(&self) -> u32 {
+        self.limits.sizeof()
     }
 }
 
@@ -269,6 +333,20 @@ impl ResizableLimits {
     }
 }
 
+impl Sizeof for ResizableLimits {
+    fn sizeof(&self) -> u32 {
+        let sizeof_flags: u32 = 1;
+        let sizeof_initial: u32 = usage_bytes_leb128_u(self.initial as u64) as u32;
+        let sizeof_maximum: u32 = if self.flags == 1 {
+            usage_bytes_leb128_u(self.maximum.unwrap() as u64) as u32
+        } else {
+            0
+        };
+
+        sizeof_flags + sizeof_initial + sizeof_maximum
+    }
+}
+
 // Single byte
 #[derive(Debug)]
 pub enum ExternalKind {
@@ -291,6 +369,12 @@ impl ExternalKind {
             3 => ExternalKind::Global,
             _ => panic!("unknown external kind: kind_head={}", kind_head),
         })
+    }
+}
+
+impl Sizeof for ExternalKind {
+    fn sizeof(&self) -> u32 {
+        1
     }
 }
 

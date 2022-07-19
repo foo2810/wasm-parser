@@ -2,7 +2,8 @@ use std::io::{BufReader, Read, Seek};
 
 use super::base::{ParseError, SectionCommon};
 
-use crate::readers::read_unsigned_leb128;
+use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
+use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::types::{GlobalType, InitExpr, VarUInt32};
 
 #[derive(Debug)]
@@ -44,6 +45,15 @@ impl GlobalSection {
     }
 }
 
+impl Sizeof for GlobalSection {
+    fn sizeof(&self) -> u32 {
+        let sizeof_common = self.common.sizeof();
+        let sizeof_payload = self.payload.sizeof();
+
+        sizeof_common + sizeof_payload
+    }
+}
+
 impl GlobalSectionPayload {
     pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
@@ -63,6 +73,15 @@ impl GlobalSectionPayload {
     }
 }
 
+impl Sizeof for GlobalSectionPayload {
+    fn sizeof(&self) -> u32 {
+        let sizeof_count = usage_bytes_leb128_u(self.count as u64) as u32;
+        let sizeof_globals: u32 = self.globals.iter().map(|x| x.sizeof()).sum();
+
+        sizeof_count + sizeof_globals
+    }
+}
+
 impl GlobalVariable {
     pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let global_type = GlobalType::parse(reader)?;
@@ -72,5 +91,14 @@ impl GlobalVariable {
             type_: global_type,
             init: init_expr,
         })
+    }
+}
+
+impl Sizeof for GlobalVariable {
+    fn sizeof(&self) -> u32 {
+        let sizeof_global_type = self.type_.sizeof();
+        let sizeof_init = self.init.sizeof();
+
+        sizeof_global_type + sizeof_init
     }
 }

@@ -4,6 +4,7 @@ use std::str;
 use super::base::{ParseError, SectionCommon};
 
 use crate::readers::{read_unsigned_leb128, read_x};
+use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::types::{VarUInt32, VarUInt7};
 
 #[derive(Debug)]
@@ -67,5 +68,14 @@ impl CustomSection {
             common: common,
             payload: payload,
         })
+    }
+}
+
+impl Sizeof for CustomSection {
+    fn sizeof(&self) -> u32 {
+        let sizeof_common = self.common.sizeof();
+        let sizeof_payload = self.payload.len() as u32;
+
+        sizeof_common + sizeof_payload
     }
 }

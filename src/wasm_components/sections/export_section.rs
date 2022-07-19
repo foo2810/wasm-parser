@@ -3,7 +3,8 @@ use std::str;
 
 use super::base::{ParseError, SectionCommon};
 
-use crate::readers::{read_unsigned_leb128, read_x};
+use crate::readers::{read_unsigned_leb128, read_x, usage_bytes_leb128_u};
+use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::types::{ExternalKind, VarUInt32};
 
 #[derive(Debug)]
@@ -46,6 +47,15 @@ impl ExportSection {
     }
 }
 
+impl Sizeof for ExportSection {
+    fn sizeof(&self) -> u32 {
+        let sizeof_common = self.common.sizeof();
+        let sizeof_payload = self.payload.sizeof();
+
+        sizeof_common + sizeof_payload
+    }
+}
+
 impl ExportSectionPayload {
     pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
@@ -63,6 +73,15 @@ impl ExportSectionPayload {
             count: count as VarUInt32,
             entries: export_entries,
         })
+    }
+}
+
+impl Sizeof for ExportSectionPayload {
+    fn sizeof(&self) -> u32 {
+        let sizeof_count = usage_bytes_leb128_u(self.count as u64) as u32;
+        let sizeof_entries: u32 = self.entries.iter().map(|x| x.sizeof()).sum();
+
+        sizeof_count + sizeof_entries
     }
 }
 
@@ -96,5 +115,16 @@ impl ExportEntry {
             kind: kind,
             index: index as VarUInt32,
         })
+    }
+}
+
+impl Sizeof for ExportEntry {
+    fn sizeof(&self) -> u32 {
+        let sizeof_field_len = usage_bytes_leb128_u(self.field_len as u64) as u32;
+        let sizeof_field_str = self.field_len as u32;
+        let sizeof_kind = self.kind.sizeof();
+        let sizeof_index = usage_bytes_leb128_u(self.index as u64) as u32;
+
+        sizeof_field_len + sizeof_field_str + sizeof_kind + sizeof_index
     }
 }

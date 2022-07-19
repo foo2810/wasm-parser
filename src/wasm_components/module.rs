@@ -1,6 +1,7 @@
 use std::io::{BufReader, Read, Seek};
 
 use crate::parser::Parser;
+use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::sections::*;
 
 // #[derive(Debug)]
@@ -42,5 +43,37 @@ impl WasmModule {
             data_section: None,
             custom_sections: Vec::new(),
         }
+    }
+}
+
+impl Sizeof for WasmModule {
+    fn sizeof(&self) -> u32 {
+        let sizeof_custom_sections: u32 = self
+            .custom_sections
+            .iter()
+            .map(|sec| -> u32 { sec.sizeof() })
+            .sum();
+
+        self.magic_and_version.sizeof()
+            + sizeof_option_section(&self.type_section)
+            + sizeof_option_section(&self.import_section)
+            + sizeof_option_section(&self.function_section)
+            + sizeof_option_section(&self.table_section)
+            + sizeof_option_section(&self.memory_section)
+            + sizeof_option_section(&self.global_section)
+            + sizeof_option_section(&self.export_section)
+            + sizeof_option_section(&self.start_section)
+            + sizeof_option_section(&self.element_section)
+            + sizeof_option_section(&self.code_section)
+            + sizeof_option_section(&self.data_section)
+            + sizeof_custom_sections
+    }
+}
+
+fn sizeof_option_section<T: Sizeof>(section: &Option<T>) -> u32 {
+    if section.is_some() {
+        section.as_ref().unwrap().sizeof()
+    } else {
+        0
     }
 }

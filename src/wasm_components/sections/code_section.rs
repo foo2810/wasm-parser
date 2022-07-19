@@ -1,7 +1,8 @@
 use std::io::{BufReader, Read, Seek};
 
 use super::base::{ParseError, SectionCommon};
-use crate::readers::read_unsigned_leb128;
+use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
+use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::code::FunctionBody;
 use crate::wasm_components::types::VarUInt32;
 
@@ -38,6 +39,15 @@ impl CodeSection {
     }
 }
 
+impl Sizeof for CodeSection {
+    fn sizeof(&self) -> u32 {
+        let sizeof_common = self.common.sizeof();
+        let sizeof_payload = self.payload.sizeof();
+
+        sizeof_common + sizeof_payload
+    }
+}
+
 impl CodeSectionPayload {
     pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut count = 0;
@@ -54,5 +64,14 @@ impl CodeSectionPayload {
             count: count as VarUInt32,
             bodies: func_bodies,
         })
+    }
+}
+
+impl Sizeof for CodeSectionPayload {
+    fn sizeof(&self) -> u32 {
+        let sizeof_count = usage_bytes_leb128_u(self.count as u64) as u32;
+        let sizeof_bodies: u32 = self.bodies.iter().map(|x| x.sizeof()).sum();
+
+        sizeof_count + sizeof_bodies
     }
 }

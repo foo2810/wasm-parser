@@ -2,7 +2,8 @@ use std::io::{BufReader, Read, Seek};
 
 use super::base::{ParseError, SectionCommon};
 
-use crate::readers::read_unsigned_leb128;
+use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
+use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::types::{InitExpr, VarUInt32};
 
 #[derive(Debug)]
@@ -46,6 +47,15 @@ impl ElementSection {
     }
 }
 
+impl Sizeof for ElementSection {
+    fn sizeof(&self) -> u32 {
+        let sizeof_common = self.common.sizeof();
+        let sizeof_payload = self.payload.sizeof();
+
+        sizeof_common + sizeof_payload
+    }
+}
+
 impl ElementSectionPayload {
     pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
@@ -63,6 +73,15 @@ impl ElementSectionPayload {
             count: count as VarUInt32,
             entries: element_entries,
         })
+    }
+}
+
+impl Sizeof for ElementSectionPayload {
+    fn sizeof(&self) -> u32 {
+        let sizeof_count = usage_bytes_leb128_u(self.count as u64) as u32;
+        let sizeof_entries: u32 = self.entries.iter().map(|x| x.sizeof()).sum();
+
+        sizeof_count + sizeof_entries
     }
 }
 
@@ -98,5 +117,20 @@ impl ElementSegment {
             num_elem: num_elem as VarUInt32,
             elems: elems,
         })
+    }
+}
+
+impl Sizeof for ElementSegment {
+    fn sizeof(&self) -> u32 {
+        let sizeof_index = usage_bytes_leb128_u(self.index as u64) as u32;
+        let sizeof_offset = self.offset.sizeof();
+        let sizeof_num_elem = usage_bytes_leb128_u(self.num_elem as u64) as u32;
+        let sizeof_elems: u32 = self
+            .elems
+            .iter()
+            .map(|x| usage_bytes_leb128_u(*x as u64) as u32)
+            .sum();
+
+        sizeof_index + sizeof_offset + sizeof_num_elem + sizeof_elems
     }
 }
