@@ -1,4 +1,4 @@
-use std::io::{BufReader, Read};
+use std::io::Read;
 
 use crate::readers::usage_bytes_leb128_u;
 use crate::readers::{read_8, read_signed_leb128, read_unsigned_leb128};
@@ -69,7 +69,7 @@ impl ValueType {
 
     // BlockTypeやElemTypeと全く同じ処理になっている。
     // なんとかまとめられないか？
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut v: i64 = 0;
         match read_signed_leb128(reader, &mut v) {
             Ok(_) => Ok(Self::new(v as VarInt7)?),
@@ -101,7 +101,7 @@ impl BlockType {
         }
     }
 
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut v: i64 = 0;
         match read_signed_leb128(reader, &mut v) {
             Ok(_) => Ok(Self::new(v as VarInt7)?),
@@ -133,7 +133,7 @@ impl ElemType {
         }
     }
 
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut v: i64 = 0;
         match read_signed_leb128(reader, &mut v) {
             Ok(_) => Ok(Self::new(v as VarInt7)?),
@@ -158,7 +158,7 @@ pub struct FuncType {
 }
 
 impl FuncType {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut form = 0;
         match read_signed_leb128(reader, &mut form) {
             Ok(_rs) => (/* To check read size */),
@@ -225,7 +225,7 @@ pub struct GlobalType {
     pub mutability: VarUInt1,
 }
 impl GlobalType {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let content_type = ValueType::parse(reader)?;
         // 0 if immutable, 1 if mutable
         let mut mutability = 0; // VarUInt1
@@ -256,7 +256,7 @@ pub struct TableType {
     pub limits: ResizableLimits,
 }
 impl TableType {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let elem_type = ElemType::parse(reader)?;
         let limits = ResizableLimits::parse(reader)?;
 
@@ -281,7 +281,7 @@ pub struct MemoryType {
     pub limits: ResizableLimits,
 }
 impl MemoryType {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let limits = ResizableLimits::parse(reader)?;
         Ok(Self { limits: limits })
     }
@@ -300,7 +300,7 @@ pub struct ResizableLimits {
     pub maximum: Option<VarUInt32>,
 }
 impl ResizableLimits {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut flags = 0; // VarUInt1
         match read_unsigned_leb128(reader, &mut flags) {
             Ok(_rs) => (/* To check read size */),
@@ -357,7 +357,7 @@ pub enum ExternalKind {
 }
 
 impl ExternalKind {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let kind_head = match read_8(reader) {
             Ok(kh) => kh[0],
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),

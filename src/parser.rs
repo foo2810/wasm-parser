@@ -1,4 +1,4 @@
-use std::io::{BufReader, Read, Seek};
+use std::io::{Read, Seek};
 
 use crate::readers::peep_8;
 use crate::wasm_components::base::Sizeof;
@@ -8,13 +8,13 @@ use crate::wasm_components::sections::*;
 
 #[derive(Debug)]
 pub struct Parser<'a, R: Read> {
-    reader: &'a mut BufReader<R>,
+    reader: &'a mut R,
     // offset: u64,     // offsetはreaderから取得する
 }
 
 // 構造体のメンバに参照を使う場合ライフタイム注釈が必要(その参照と構造体自身の生存期間の関係を明示するため)
 impl<'a, R: Read + Seek> Parser<'a, R> {
-    pub fn new(reader: &'a mut BufReader<R>) -> Parser<R> {
+    pub fn new(reader: &'a mut R) -> Parser<R> {
         Parser { reader: reader }
     }
 

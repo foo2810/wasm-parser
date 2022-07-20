@@ -1,4 +1,4 @@
-use std::io::{BufReader, Read, Seek};
+use std::io::{Read, Seek};
 
 use crate::readers::usage_bytes_leb128_u;
 use crate::readers::{read_8, read_unsigned_leb128, read_x};
@@ -31,7 +31,7 @@ pub struct LocalEntry {
 }
 
 impl Expr {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let bytes = read_all_instrs(reader)?;
         Ok(Expr { bytes: bytes })
     }
@@ -44,7 +44,7 @@ impl Sizeof for Expr {
 }
 
 impl FunctionBody {
-    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
         // body_sizeはFunctionBodyのbody_sizeフィールドを除く部分のバイト数を表す
         let mut body_size: u64 = 0; // VarUInt32
         match read_unsigned_leb128(reader, &mut body_size) {
@@ -121,7 +121,7 @@ impl Sizeof for FunctionBody {
 }
 
 impl LocalEntry {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         // let count = leb128::read::unsigned(reader).unwrap() as VarUInt32;
         let mut count = 0; // VarUInt32
         match read_unsigned_leb128(reader, &mut count) {
@@ -146,7 +146,7 @@ impl Sizeof for LocalEntry {
     }
 }
 
-fn read_all_instrs<R: Read>(reader: &mut BufReader<R>) -> Result<Vec<u8>, ParseError> {
+fn read_all_instrs<R: Read>(reader: &mut R) -> Result<Vec<u8>, ParseError> {
     let mut instrs: Vec<u8> = Vec::new();
     loop {
         let b = match read_8(reader) {

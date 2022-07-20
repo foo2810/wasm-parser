@@ -1,4 +1,4 @@
-use std::io::{BufReader, Read, Seek};
+use std::io::{Read, Seek};
 
 use crate::parser::Parser;
 use crate::wasm_components::base::Sizeof;
@@ -22,7 +22,7 @@ pub struct WasmModule {
 }
 
 impl WasmModule {
-    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
         let mut parser = Parser::new(reader);
         Ok(parser.parse_all()?)
     }

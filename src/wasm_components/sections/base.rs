@@ -1,4 +1,4 @@
-use std::io::{BufReader, Read, Seek};
+use std::io::{Read, Seek};
 
 use super::{
     CodeSection, CustomSection, DataSection, ElementSection, ExportSection, FunctionSection,
@@ -56,7 +56,7 @@ pub struct SectionCommon {
 
 impl SectionCommon {
     // pub fn SectionCommon<R: Read + Seek>(
-    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<SectionCommon, ParseError> {
+    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<SectionCommon, ParseError> {
         let mut id = 0; // VarUInt7
         match read_unsigned_leb128(reader, &mut id) {
             Ok(_rs) => (/* To check read size */),

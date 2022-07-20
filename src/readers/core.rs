@@ -1,7 +1,7 @@
-use std::io::{BufReader, Read, Seek};
+use std::io::{Read, Seek, SeekFrom};
 
 // Read x byte
-pub fn read_x<R: Read>(reader: &mut BufReader<R>, size: usize) -> Result<Vec<u8>, std::io::Error> {
+pub fn read_x<R: Read>(reader: &mut R, size: usize) -> Result<Vec<u8>, std::io::Error> {
     let mut buf: Vec<u8> = Vec::new();
     buf.resize(size, 0);
     // Stack Overflow : https://stackoverflow.com/questions/30412521/how-to-read-a-specific-number-of-bytes-from-a-stream
@@ -14,7 +14,7 @@ pub fn read_x<R: Read>(reader: &mut BufReader<R>, size: usize) -> Result<Vec<u8>
 }
 
 // Read 1 byte
-pub fn read_8<R: Read>(reader: &mut BufReader<R>) -> Result<[u8; 1], std::io::Error> {
+pub fn read_8<R: Read>(reader: &mut R) -> Result<[u8; 1], std::io::Error> {
     let mut buf: [u8; 1] = [0; 1];
 
     if let Err(err) = reader.read_exact(&mut buf) {
@@ -25,7 +25,7 @@ pub fn read_8<R: Read>(reader: &mut BufReader<R>) -> Result<[u8; 1], std::io::Er
 }
 
 // Read 4 byte
-pub fn read_32<R: Read>(reader: &mut BufReader<R>) -> Result<[u8; 4], std::io::Error> {
+pub fn read_32<R: Read>(reader: &mut R) -> Result<[u8; 4], std::io::Error> {
     let mut buf: [u8; 4] = [0; 4];
 
     if let Err(err) = reader.read_exact(&mut buf) {
@@ -36,14 +36,14 @@ pub fn read_32<R: Read>(reader: &mut BufReader<R>) -> Result<[u8; 4], std::io::E
 }
 
 // Peep 1 byte (not move cursor)
-pub fn peep_8<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<[u8; 1], std::io::Error> {
+pub fn peep_8<R: Read + Seek>(reader: &mut R) -> Result<[u8; 1], std::io::Error> {
     let mut buf: [u8; 1] = [0; 1];
 
     if let Err(err) = reader.read_exact(&mut buf) {
         return Err(err);
     };
 
-    if let Err(err) = reader.seek_relative(-1) {
+    if let Err(err) = reader.seek(SeekFrom::Current(-1)) {
         return Err(err);
     };
 
@@ -51,7 +51,7 @@ pub fn peep_8<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<[u8; 1], std:
 }
 
 pub fn read_unsigned_leb128<R: Read>(
-    reader: &mut BufReader<R>,
+    reader: &mut R,
     buffer: &mut u64,
 ) -> Result<u8, leb128::read::Error> {
     match leb128::read::unsigned(reader) {
@@ -63,7 +63,7 @@ pub fn read_unsigned_leb128<R: Read>(
 }
 
 pub fn read_signed_leb128<R: Read>(
-    reader: &mut BufReader<R>,
+    reader: &mut R,
     buffer: &mut i64,
 ) -> Result<u8, leb128::read::Error> {
     match leb128::read::signed(reader) {

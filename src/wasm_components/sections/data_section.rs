@@ -1,4 +1,4 @@
-use std::io::{BufReader, Read, Seek};
+use std::io::{Read, Seek};
 
 use super::base::{ParseError, SectionCommon};
 
@@ -27,7 +27,7 @@ pub struct DataSegment {
 }
 
 impl DataSection {
-    pub fn parse<R: Read + Seek>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
         // Common reading in all sections //
         let common = SectionCommon::parse(reader)?;
         if common.id != 11 {
@@ -57,7 +57,7 @@ impl Sizeof for DataSection {
 }
 
 impl DataSectionPayload {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
         match read_unsigned_leb128(reader, &mut count) {
             Ok(_rs) => (/* To check read size */),
@@ -85,7 +85,7 @@ impl Sizeof for DataSectionPayload {
 }
 
 impl DataSegment {
-    pub fn parse<R: Read>(reader: &mut BufReader<R>) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut index: u64 = 0;
         match read_unsigned_leb128(reader, &mut index) {
             Ok(_rs) => (/* To check read size */),
