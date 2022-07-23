@@ -57,8 +57,8 @@ pub trait SectionCommonInterface {
         self.get_base().payload_len
     }
 
-    fn get_name(&self) -> &Option<String> {
-        &self.get_base().name
+    fn get_name(&self) -> Option<&String> {
+        self.get_base().name.as_ref()
     }
 }
 
