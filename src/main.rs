@@ -4,6 +4,8 @@
  * WASM_VERSION = 1.1
  */
 
+mod printer;
+
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
@@ -51,7 +53,7 @@ fn main() {
 
     let mut parser = WasmParser::new(&mut reader);
 
-    let _ = match parser.parse_all() {
+    let wasm_module = match parser.parse_all() {
         Ok(module) => module,
         Err(err) => match err {
             ParseError::ReaderError(msg) => panic!(" > Error: {}", msg),
@@ -59,4 +61,17 @@ fn main() {
             ParseError::UnexpectedError(msg) => panic!(" > Error: {}", msg),
         },
     };
+
+    printer::print_type_section(&wasm_module);
+    printer::print_import_section(&wasm_module);
+    printer::print_function_section(&wasm_module);
+    printer::print_table_section(&wasm_module);
+    printer::print_memory_section(&wasm_module);
+    printer::print_global_section(&wasm_module);
+    printer::print_export_section(&wasm_module);
+    printer::print_start_section(&wasm_module);
+    printer::print_element_section(&wasm_module);
+    printer::print_data_section(&wasm_module);
+
+    // printer::print_all_section_for_debug(&wasm_module);
 }
