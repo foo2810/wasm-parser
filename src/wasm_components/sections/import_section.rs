@@ -1,7 +1,7 @@
 use std::io::{Read, Seek};
 use std::str;
 
-use super::base::{ParseError, SectionCommon};
+use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
 use crate::readers::{read_unsigned_leb128, read_x, usage_bytes_leb128_u};
 use crate::wasm_components::base::Sizeof;
@@ -9,24 +9,24 @@ use crate::wasm_components::types::{ExternalKind, GlobalType, MemoryType, TableT
 
 #[derive(Debug)]
 pub struct ImportSection {
-    pub common: SectionCommon,
-    pub payload: ImportSectionPayload,
+    common: SectionCommon,
+    payload: ImportSectionPayload,
 }
 
 #[derive(Debug)]
 pub struct ImportSectionPayload {
-    pub count: VarUInt32,
-    pub entries: Vec<ImportEntry>,
+    count: VarUInt32,
+    entries: Vec<ImportEntry>,
 }
 
 #[derive(Debug)]
 pub struct ImportEntry {
-    pub module_len: VarUInt32,
-    pub module_str: String,
-    pub field_len: VarUInt32,
-    pub field_str: String,
-    pub kind: ExternalKind,
-    pub type_: TypeEntry,
+    module_len: VarUInt32,
+    module_str: String,
+    field_len: VarUInt32,
+    field_str: String,
+    kind: ExternalKind,
+    type_: TypeEntry,
 }
 
 #[derive(Debug)]
@@ -56,6 +56,23 @@ impl ImportSection {
             payload: payload,
         })
     }
+
+    /// インポートエントリの数
+    pub fn get_num_import_entries(&self) -> u32 {
+        self.payload.count
+    }
+
+    /// インポートエントリのリストを返す
+    pub fn get_import_entries(&self) -> Vec<&ImportEntry> {
+        self.payload.entries.iter().collect()
+    }
+
+    // Utilities
+
+    /// idx番目のインポートエントリを返す
+    pub fn get_import_entry(&self, idx: usize) -> Option<&ImportEntry> {
+        self.payload.entries.get(idx)
+    }
 }
 
 impl Sizeof for ImportSection {
@@ -64,6 +81,12 @@ impl Sizeof for ImportSection {
         let sizeof_payload = self.payload.sizeof();
 
         sizeof_common + sizeof_payload
+    }
+}
+
+impl SectionCommonInterface for ImportSection {
+    fn get_base(&self) -> &SectionCommon {
+        &self.common
     }
 }
 
@@ -137,6 +160,26 @@ impl ImportEntry {
             kind: kind,
             type_: type_,
         })
+    }
+
+    /// インポートされたデータのモジュール名
+    pub fn get_import_module_name(&self) -> &String {
+        &self.module_str
+    }
+
+    /// インポートされたデータのラベル名(シンボル)
+    pub fn get_import_entry_name(&self) -> &String {
+        &self.field_str
+    }
+
+    /// インポートされたデータの種類
+    pub fn get_kind(&self) -> &ExternalKind {
+        &self.kind
+    }
+
+    /// インポートされたデータのタイプ
+    pub fn get_type(&self) -> &TypeEntry {
+        &self.type_
     }
 }
 

@@ -8,8 +8,8 @@ use crate::wasm_components::base::Sizeof;
 #[derive(Debug, Clone)]
 pub struct MagicAndVersion {
     // 0x6d736100
-    pub magic: [u8; 4],
-    pub version: usize,
+    magic: [u8; 4],
+    version: usize,
 }
 impl MagicAndVersion {
     pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
@@ -27,6 +27,16 @@ impl MagicAndVersion {
             magic: magic_buf,
             version: v as usize,
         })
+    }
+
+    /// バイナリの先頭に格納されているマジックナンバー(4 bytes)を返す
+    pub fn get_magic(&self) -> &[u8; 4] {
+        &self.magic
+    }
+
+    /// Wasmのバージョンを返す
+    pub fn get_version(&self) -> u32 {
+        self.version as u32
     }
 }
 

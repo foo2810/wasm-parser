@@ -1,6 +1,6 @@
 use std::io::{Read, Seek};
 
-use super::base::{ParseError, SectionCommon};
+use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
 use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
 use crate::wasm_components::base::Sizeof;
@@ -8,14 +8,14 @@ use crate::wasm_components::types::{FuncType, VarUInt32};
 
 #[derive(Debug)]
 pub struct TypeSection {
-    pub common: SectionCommon,
-    pub payload: TypeSectionPayload,
+    common: SectionCommon,
+    payload: TypeSectionPayload,
 }
 
 #[derive(Debug)]
 pub struct TypeSectionPayload {
-    pub count: VarUInt32,
-    pub entries: Vec<FuncType>,
+    count: VarUInt32,
+    entries: Vec<FuncType>,
 }
 
 impl TypeSection {
@@ -37,6 +37,23 @@ impl TypeSection {
             payload: payload,
         })
     }
+
+    /// 関数の型の数を返す
+    pub fn get_num_types(&self) -> u32 {
+        self.payload.count
+    }
+
+    /// 関数の型のリストを返す
+    pub fn get_type_list(&self) -> Vec<&FuncType> {
+        self.payload.entries.iter().collect()
+    }
+
+    // Utilities
+
+    /// idx番目の関数型を返す
+    pub fn get_type(&self, idx: usize) -> Option<&FuncType> {
+        self.get_type_list().get(idx).map(|v| *v)
+    }
 }
 
 impl Sizeof for TypeSection {
@@ -45,6 +62,12 @@ impl Sizeof for TypeSection {
         let sizeof_payload = self.payload.sizeof();
 
         sizeof_common + sizeof_payload
+    }
+}
+
+impl SectionCommonInterface for TypeSection {
+    fn get_base(&self) -> &SectionCommon {
+        &self.common
     }
 }
 

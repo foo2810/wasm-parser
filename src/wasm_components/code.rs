@@ -5,35 +5,39 @@ use crate::readers::{read_8, read_unsigned_leb128, read_x};
 use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::sections::ParseError;
 
-use super::types::{ValueType, VarUInt32};
+use super::types::{LangTypes, ValueType, VarUInt32};
 
 #[derive(Debug)]
 pub enum InstrType {}
 
 #[derive(Debug)]
 pub struct Expr {
-    pub bytes: Vec<u8>,
+    bytes: Vec<u8>,
 }
 
 #[derive(Debug)]
 pub struct FunctionBody {
-    pub body_size: VarUInt32,
-    pub local_count: VarUInt32,
-    pub locals: Vec<LocalEntry>,
-    pub code: Vec<u8>,
-    pub end: u8, // 0x0B = 'end' instruction
+    body_size: VarUInt32,
+    local_count: VarUInt32,
+    locals: Vec<LocalEntry>,
+    code: Vec<u8>,
+    end: u8, // 0x0B = 'end' instruction
 }
 
 #[derive(Debug)]
 pub struct LocalEntry {
-    pub count: VarUInt32,
-    pub type_: ValueType,
+    count: VarUInt32,
+    type_: ValueType,
 }
 
 impl Expr {
     pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let bytes = read_all_instrs(reader)?;
         Ok(Expr { bytes: bytes })
+    }
+
+    pub fn get_instrs(&self) -> &Vec<u8> {
+        &self.bytes
     }
 }
 
@@ -106,6 +110,10 @@ impl FunctionBody {
             end: end,
         })
     }
+
+    pub fn get_locals(&self) -> Vec<&LangTypes> {
+        self.locals.iter().map(|x| x.get_value_type()).collect()
+    }
 }
 
 impl Sizeof for FunctionBody {
@@ -134,6 +142,10 @@ impl LocalEntry {
             count: count as VarUInt32,
             type_: type_,
         })
+    }
+
+    pub fn get_value_type(&self) -> &LangTypes {
+        self.type_.get_value()
     }
 }
 

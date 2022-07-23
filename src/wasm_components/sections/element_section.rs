@@ -1,6 +1,7 @@
+use core::panic;
 use std::io::{Read, Seek};
 
-use super::base::{ParseError, SectionCommon};
+use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
 use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
 use crate::wasm_components::base::Sizeof;
@@ -8,22 +9,22 @@ use crate::wasm_components::types::{InitExpr, VarUInt32};
 
 #[derive(Debug)]
 pub struct ElementSection {
-    pub common: SectionCommon,
-    pub payload: ElementSectionPayload,
+    common: SectionCommon,
+    payload: ElementSectionPayload,
 }
 
 #[derive(Debug)]
 pub struct ElementSectionPayload {
-    pub count: VarUInt32,
-    pub entries: Vec<ElementSegment>,
+    count: VarUInt32,
+    entries: Vec<ElementSegment>,
 }
 
 #[derive(Debug)]
 pub struct ElementSegment {
-    pub index: VarUInt32,
-    pub offset: InitExpr,
-    pub num_elem: VarUInt32,
-    pub elems: Vec<VarUInt32>,
+    index: VarUInt32,
+    offset: InitExpr,
+    num_elem: VarUInt32,
+    elems: Vec<VarUInt32>,
 }
 
 impl ElementSection {
@@ -45,6 +46,25 @@ impl ElementSection {
             payload: payload,
         })
     }
+
+    /// elemの個数を返す
+    pub fn get_num_elements(&self) -> u32 {
+        self.payload.count
+    }
+
+    /// elemセグメントのリストを返す
+    ///
+    /// elemセグメントは一つのテーブルに対応する
+    pub fn get_element_list(&self) -> Vec<&ElementSegment> {
+        self.payload.entries.iter().collect()
+    }
+
+    // Utilities
+
+    /// idx番目のelemセグメント
+    pub fn get_element(&self, idx: usize) -> Option<&ElementSegment> {
+        self.payload.entries.get(idx)
+    }
 }
 
 impl Sizeof for ElementSection {
@@ -53,6 +73,12 @@ impl Sizeof for ElementSection {
         let sizeof_payload = self.payload.sizeof();
 
         sizeof_common + sizeof_payload
+    }
+}
+
+impl SectionCommonInterface for ElementSection {
+    fn get_base(&self) -> &SectionCommon {
+        &self.common
     }
 }
 
@@ -117,6 +143,28 @@ impl ElementSegment {
             num_elem: num_elem as VarUInt32,
             elems: elems,
         })
+    }
+
+    /// 対応するテーブルインデックスを返す
+    ///
+    /// Wasm v1のMVPモデルでは、1つで固定
+    pub fn get_table_index(&self) -> u32 {
+        self.index
+    }
+
+    /// (not implemented) オフセットを返す(予定)
+    pub fn get_offset(&self) -> i32 {
+        panic!("not implemented")
+    }
+
+    /// elemの個数を返す
+    pub fn get_num_elements(&self) -> u32 {
+        self.num_elem
+    }
+
+    /// elemのリストを返す
+    pub fn get_elements(&self) -> Vec<u32> {
+        self.elems.clone()
     }
 }
 

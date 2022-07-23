@@ -1,6 +1,6 @@
 use std::io::{Read, Seek};
 
-use super::base::{ParseError, SectionCommon};
+use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
 use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
 use crate::wasm_components::base::Sizeof;
@@ -8,14 +8,14 @@ use crate::wasm_components::types::{MemoryType, VarUInt32};
 
 #[derive(Debug)]
 pub struct MemorySection {
-    pub common: SectionCommon,
-    pub payload: MemorySectionPayload,
+    common: SectionCommon,
+    payload: MemorySectionPayload,
 }
 
 #[derive(Debug)]
 pub struct MemorySectionPayload {
-    pub count: VarUInt32,
-    pub entries: Vec<MemoryType>,
+    count: VarUInt32,
+    entries: Vec<MemoryType>,
 }
 
 impl MemorySection {
@@ -33,6 +33,27 @@ impl MemorySection {
             payload: payload,
         })
     }
+
+    /// 線形メモリの数を返す
+    ///
+    /// Wasm v1のMVPモデルでは、1つで固定
+    pub fn get_num_memories(&self) -> u32 {
+        self.payload.count
+    }
+
+    /// 線形メモリのリストを返す
+    ///
+    /// Wasm v1のMVPモデルでは、1つだけ返す
+    pub fn get_memories(&self) -> Vec<&MemoryType> {
+        self.payload.entries.iter().collect()
+    }
+
+    /// Utilities
+
+    /// idx番目の線形メモリを返す
+    pub fn get_memory(&self, idx: usize) -> Option<&MemoryType> {
+        self.payload.entries.get(idx)
+    }
 }
 
 impl Sizeof for MemorySection {
@@ -41,6 +62,12 @@ impl Sizeof for MemorySection {
         let sizeof_payload = self.payload.sizeof();
 
         sizeof_common + sizeof_payload
+    }
+}
+
+impl SectionCommonInterface for MemorySection {
+    fn get_base(&self) -> &SectionCommon {
+        &self.common
     }
 }
 

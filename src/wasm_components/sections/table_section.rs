@@ -1,6 +1,6 @@
 use std::io::{Read, Seek};
 
-use super::base::{ParseError, SectionCommon};
+use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
 use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
 use crate::wasm_components::base::Sizeof;
@@ -8,14 +8,14 @@ use crate::wasm_components::types::{TableType, VarUInt32};
 
 #[derive(Debug)]
 pub struct TableSection {
-    pub common: SectionCommon,
-    pub payload: TableSectionPayload,
+    common: SectionCommon,
+    payload: TableSectionPayload,
 }
 
 #[derive(Debug)]
 pub struct TableSectionPayload {
-    pub count: VarUInt32,
-    pub entries: Vec<TableType>,
+    count: VarUInt32,
+    entries: Vec<TableType>,
 }
 
 impl TableSection {
@@ -37,6 +37,25 @@ impl TableSection {
             payload: payload,
         })
     }
+
+    /// テーブルの数の数を返す
+    ///
+    /// Wasm v1のMVPモデルでは、1つで固定
+    pub fn get_num_tables(&self) -> u32 {
+        self.payload.count
+    }
+
+    /// テーブル情報のリストを返す
+    pub fn get_table_list(&self) -> Vec<&TableType> {
+        self.payload.entries.iter().collect()
+    }
+
+    /// Utilities
+
+    /// idx番目のテーブル情報(タイプ)を返す
+    pub fn get_table_type(&self, idx: usize) -> Option<&TableType> {
+        self.payload.entries.get(idx)
+    }
 }
 
 impl Sizeof for TableSection {
@@ -45,6 +64,12 @@ impl Sizeof for TableSection {
         let sizeof_payload = self.payload.sizeof();
 
         sizeof_common + sizeof_payload
+    }
+}
+
+impl SectionCommonInterface for TableSection {
+    fn get_base(&self) -> &SectionCommon {
+        &self.common
     }
 }
 

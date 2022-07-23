@@ -1,6 +1,6 @@
 use std::io::{Read, Seek};
 
-use super::base::{ParseError, SectionCommon};
+use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
 use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::code::FunctionBody;
@@ -8,14 +8,14 @@ use crate::wasm_components::types::VarUInt32;
 
 #[derive(Debug)]
 pub struct CodeSection {
-    pub common: SectionCommon,
-    pub payload: CodeSectionPayload,
+    common: SectionCommon,
+    payload: CodeSectionPayload,
 }
 
 #[derive(Debug)]
 pub struct CodeSectionPayload {
-    pub count: VarUInt32,
-    pub bodies: Vec<FunctionBody>,
+    count: VarUInt32,
+    bodies: Vec<FunctionBody>,
 }
 
 impl CodeSection {
@@ -37,6 +37,23 @@ impl CodeSection {
             payload: payload,
         })
     }
+
+    /// FuncBodyの数を返す
+    pub fn get_num_func_bodies(&self) -> u32 {
+        self.payload.count
+    }
+
+    /// FuncBodyのリストを返す
+    pub fn get_func_body_list(&self) -> Vec<&FunctionBody> {
+        self.payload.bodies.iter().collect()
+    }
+
+    // Utilities
+
+    /// idx番目のFuncBodyを返す
+    pub fn get_func_body(&self, idx: usize) -> Option<&FunctionBody> {
+        self.payload.bodies.get(idx)
+    }
 }
 
 impl Sizeof for CodeSection {
@@ -45,6 +62,12 @@ impl Sizeof for CodeSection {
         let sizeof_payload = self.payload.sizeof();
 
         sizeof_common + sizeof_payload
+    }
+}
+
+impl SectionCommonInterface for CodeSection {
+    fn get_base(&self) -> &SectionCommon {
+        &self.common
     }
 }
 

@@ -44,6 +44,58 @@ impl WasmModule {
             custom_sections: Vec::new(),
         }
     }
+
+    pub fn get_magic_and_version(&self) -> &MagicAndVersion {
+        &self.magic_and_version
+    }
+
+    pub fn get_type_section(&self) -> Option<&TypeSection> {
+        self.type_section.as_ref()
+    }
+
+    pub fn get_import_section(&self) -> Option<&ImportSection> {
+        self.import_section.as_ref()
+    }
+
+    pub fn get_function_section(&self) -> Option<&FunctionSection> {
+        self.function_section.as_ref()
+    }
+
+    pub fn get_table_section(&self) -> Option<&TableSection> {
+        self.table_section.as_ref()
+    }
+
+    pub fn get_memory_section(&self) -> Option<&MemorySection> {
+        self.memory_section.as_ref()
+    }
+
+    pub fn get_global_section(&self) -> Option<&GlobalSection> {
+        self.global_section.as_ref()
+    }
+
+    pub fn get_export_section(&self) -> Option<&ExportSection> {
+        self.export_section.as_ref()
+    }
+
+    pub fn get_start_section(&self) -> Option<&StartSection> {
+        self.start_section.as_ref()
+    }
+
+    pub fn get_element_section(&self) -> Option<&ElementSection> {
+        self.element_section.as_ref()
+    }
+
+    pub fn get_code_section(&self) -> Option<&CodeSection> {
+        self.code_section.as_ref()
+    }
+
+    pub fn get_data_section(&self) -> Option<&DataSection> {
+        self.data_section.as_ref()
+    }
+
+    pub fn get_custom_sections(&self) -> Vec<&CustomSection> {
+        self.custom_sections.iter().collect()
+    }
 }
 
 impl Sizeof for WasmModule {

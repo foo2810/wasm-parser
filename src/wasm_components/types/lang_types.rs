@@ -50,7 +50,7 @@ impl LangTypes {
 // pub type ValueType = LangTypes;
 #[derive(Debug)]
 pub struct ValueType {
-    pub value: LangTypes,
+    value: LangTypes,
 }
 impl ValueType {
     pub fn new(v: VarInt7) -> Result<Self, ParseError> {
@@ -76,6 +76,11 @@ impl ValueType {
             Err(err) => Err(ParseError::ReaderError(format!("{:?}", err))),
         }
     }
+
+    /// 値の型を返す
+    pub fn get_value(&self) -> &LangTypes {
+        &self.value
+    }
 }
 
 impl Sizeof for ValueType {
@@ -87,7 +92,7 @@ impl Sizeof for ValueType {
 // pub type BlockType = LangTypes;
 #[derive(Debug)]
 pub struct BlockType {
-    pub value: LangTypes,
+    value: LangTypes,
 }
 impl BlockType {
     pub fn new(v: VarInt7) -> Result<Self, ParseError> {
@@ -108,6 +113,11 @@ impl BlockType {
             Err(err) => Err(ParseError::ReaderError(format!("{:?}", err))),
         }
     }
+
+    /// blockの評価値の型を返す
+    pub fn get_value(&self) -> &LangTypes {
+        &self.value
+    }
 }
 
 impl Sizeof for BlockType {
@@ -119,7 +129,7 @@ impl Sizeof for BlockType {
 // pub type ElemType = LangTypes;
 #[derive(Debug)]
 pub struct ElemType {
-    pub value: LangTypes,
+    value: LangTypes,
 }
 impl ElemType {
     pub fn new(v: VarInt7) -> Result<Self, ParseError> {
@@ -140,6 +150,13 @@ impl ElemType {
             Err(err) => Err(ParseError::ReaderError(format!("{:?}", err))),
         }
     }
+
+    /// elemのタイプを返す
+    ///
+    /// Wasm v1のMVPモデルでは、ANYFUNCのみ
+    pub fn get_value(&self) -> &LangTypes {
+        &self.value
+    }
 }
 
 impl Sizeof for ElemType {
@@ -150,11 +167,11 @@ impl Sizeof for ElemType {
 
 #[derive(Debug)]
 pub struct FuncType {
-    pub form: VarInt7,
-    pub param_count: VarUInt32,
-    pub param_types: Vec<ValueType>,
-    pub return_count: VarUInt1,
-    pub return_type: Option<ValueType>, // return_type: Vec<ValueType>
+    form: VarInt7,
+    param_count: VarUInt32,
+    param_types: Vec<ValueType>,
+    return_count: VarUInt1,
+    return_type: Option<ValueType>, // return_type: Vec<ValueType>
 }
 
 impl FuncType {
@@ -197,6 +214,26 @@ impl FuncType {
             return_type: return_type,
         })
     }
+
+    /// 引数の数を返す
+    pub fn get_num_params(&self) -> u32 {
+        self.param_count
+    }
+
+    /// 引数の型リストを返す
+    pub fn get_param_types(&self) -> Vec<&ValueType> {
+        self.param_types.iter().collect()
+    }
+
+    /// 戻り値の数を返す(0 or 1)
+    pub fn get_num_return(&self) -> u8 {
+        self.return_count
+    }
+
+    /// 戻り値の型を返す
+    pub fn get_return_type(&self) -> Option<&ValueType> {
+        self.return_type.as_ref()
+    }
 }
 
 impl Sizeof for FuncType {
@@ -221,8 +258,8 @@ impl Sizeof for FuncType {
 
 #[derive(Debug)]
 pub struct GlobalType {
-    pub content_type: ValueType,
-    pub mutability: VarUInt1,
+    content_type: ValueType,
+    mutability: VarUInt1,
 }
 impl GlobalType {
     pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
@@ -239,6 +276,16 @@ impl GlobalType {
             mutability: mutability as VarUInt1,
         })
     }
+
+    /// グローバル変数の型を返す
+    pub fn get_type(&self) -> &LangTypes {
+        &self.content_type.value
+    }
+
+    /// グローバル変数の可変性を返す(mutable or immutable)
+    pub fn get_mutability(&self) -> bool {
+        self.mutability == 1
+    }
 }
 
 impl Sizeof for GlobalType {
@@ -252,8 +299,8 @@ impl Sizeof for GlobalType {
 
 #[derive(Debug)]
 pub struct TableType {
-    pub element_type: ElemType,
-    pub limits: ResizableLimits,
+    element_type: ElemType,
+    limits: ResizableLimits,
 }
 impl TableType {
     pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
@@ -264,6 +311,20 @@ impl TableType {
             element_type: elem_type,
             limits: limits,
         })
+    }
+
+    /// テーブルエントリのタイプを返す
+    ///
+    /// Wasm v1のMVPモデルでは、エントリタイプはFUNCREFのみ
+    pub fn get_elem_type(&self) -> &LangTypes {
+        &self.element_type.value
+    }
+
+    /// テーブルサイズの制限情報を返す
+    ///
+    /// Wasm v1のMVPモデルでは、テーブルサイズは1で固定
+    pub fn get_limits(&self) -> &ResizableLimits {
+        &self.limits
     }
 }
 
@@ -278,12 +339,17 @@ impl Sizeof for TableType {
 
 #[derive(Debug)]
 pub struct MemoryType {
-    pub limits: ResizableLimits,
+    limits: ResizableLimits,
 }
 impl MemoryType {
     pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let limits = ResizableLimits::parse(reader)?;
         Ok(Self { limits: limits })
+    }
+
+    /// メモリサイズの制限情報を返す
+    pub fn get_limits(&self) -> &ResizableLimits {
+        &self.limits
     }
 }
 
@@ -295,9 +361,9 @@ impl Sizeof for MemoryType {
 
 #[derive(Debug)]
 pub struct ResizableLimits {
-    pub flags: VarUInt1,
-    pub initial: VarUInt32,
-    pub maximum: Option<VarUInt32>,
+    flags: VarUInt1,
+    initial: VarUInt32,
+    maximum: Option<VarUInt32>,
 }
 impl ResizableLimits {
     pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
@@ -330,6 +396,16 @@ impl ResizableLimits {
             initial: initial as VarUInt32,
             maximum: maximum,
         })
+    }
+
+    /// 初期サイズを返す
+    pub fn get_initial_length(&self) -> u32 {
+        self.initial
+    }
+
+    /// サイズの上限を返す
+    pub fn get_maximum_length(&self) -> Option<u32> {
+        self.maximum.clone()
     }
 }
 

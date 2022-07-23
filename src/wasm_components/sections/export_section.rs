@@ -1,7 +1,7 @@
 use std::io::{Read, Seek};
 use std::str;
 
-use super::base::{ParseError, SectionCommon};
+use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
 use crate::readers::{read_unsigned_leb128, read_x, usage_bytes_leb128_u};
 use crate::wasm_components::base::Sizeof;
@@ -9,21 +9,21 @@ use crate::wasm_components::types::{ExternalKind, VarUInt32};
 
 #[derive(Debug)]
 pub struct ExportSection {
-    pub common: SectionCommon,
-    pub payload: ExportSectionPayload,
+    common: SectionCommon,
+    payload: ExportSectionPayload,
 }
 
 #[derive(Debug)]
 pub struct ExportSectionPayload {
-    pub count: VarUInt32,
-    pub entries: Vec<ExportEntry>,
+    count: VarUInt32,
+    entries: Vec<ExportEntry>,
 }
 #[derive(Debug)]
 pub struct ExportEntry {
-    pub field_len: VarUInt32,
-    pub field_str: String,
-    pub kind: ExternalKind,
-    pub index: VarUInt32,
+    field_len: VarUInt32,
+    field_str: String,
+    kind: ExternalKind,
+    index: VarUInt32,
 }
 
 impl ExportSection {
@@ -45,6 +45,23 @@ impl ExportSection {
             payload: payload,
         })
     }
+
+    /// エクスポートエントリの数
+    pub fn get_num_export_entries(&self) -> u32 {
+        self.payload.count
+    }
+
+    /// エクスポートエントリのリストを返す
+    pub fn get_export_entry_list(&self) -> Vec<&ExportEntry> {
+        self.payload.entries.iter().collect()
+    }
+
+    // Utilities
+
+    /// idx番目のエクスポートエントリを返す
+    pub fn get_export_entry(&self, idx: usize) -> Option<&ExportEntry> {
+        self.payload.entries.get(idx)
+    }
 }
 
 impl Sizeof for ExportSection {
@@ -53,6 +70,12 @@ impl Sizeof for ExportSection {
         let sizeof_payload = self.payload.sizeof();
 
         sizeof_common + sizeof_payload
+    }
+}
+
+impl SectionCommonInterface for ExportSection {
+    fn get_base(&self) -> &SectionCommon {
+        &self.common
     }
 }
 
@@ -115,6 +138,23 @@ impl ExportEntry {
             kind: kind,
             index: index as VarUInt32,
         })
+    }
+
+    /// エクスポートされるデータのラベル名(シンボル)
+    pub fn get_entry_name(&self) -> &String {
+        &self.field_str
+    }
+
+    /// エクスポートされるデータの種類
+    ///
+    /// Function, Table, Memory, Global
+    pub fn get_kind(&self) -> &ExternalKind {
+        &self.kind
+    }
+
+    /// 実体にアクセスするためのインデックス
+    pub fn get_index(&self) -> u32 {
+        self.index
     }
 }
 

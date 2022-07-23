@@ -45,6 +45,23 @@ pub enum ParseError {
     UnexpectedError(String),
 }
 
+pub trait SectionCommonInterface {
+    /// 各セクションではこの関数のみを実装すれば良い
+    fn get_base(&self) -> &SectionCommon;
+
+    fn get_id(&self) -> u8 {
+        self.get_base().id
+    }
+
+    fn get_payload_len(&self) -> u32 {
+        self.get_base().payload_len
+    }
+
+    fn get_name(&self) -> &Option<String> {
+        &self.get_base().name
+    }
+}
+
 // Common part of all section without CustomSection
 #[derive(Debug)]
 pub struct SectionCommon {

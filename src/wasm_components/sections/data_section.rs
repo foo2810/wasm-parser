@@ -1,6 +1,6 @@
 use std::io::{Read, Seek};
 
-use super::base::{ParseError, SectionCommon};
+use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
 use crate::readers::{read_8, read_unsigned_leb128, usage_bytes_leb128_u};
 use crate::wasm_components::base::Sizeof;
@@ -8,22 +8,22 @@ use crate::wasm_components::types::{InitExpr, VarUInt32};
 
 #[derive(Debug)]
 pub struct DataSection {
-    pub common: SectionCommon,
-    pub payload: DataSectionPayload,
+    common: SectionCommon,
+    payload: DataSectionPayload,
 }
 
 #[derive(Debug)]
 pub struct DataSectionPayload {
-    pub count: VarUInt32,
-    pub entries: Vec<DataSegment>,
+    count: VarUInt32,
+    entries: Vec<DataSegment>,
 }
 
 #[derive(Debug)]
 pub struct DataSegment {
-    pub index: VarUInt32,
-    pub offset: InitExpr,
-    pub size: VarUInt32, // size of data (bytes)
-    pub data: Vec<u8>,
+    index: VarUInt32,
+    offset: InitExpr,
+    size: VarUInt32, // size of data (bytes)
+    data: Vec<u8>,
 }
 
 impl DataSection {
@@ -45,6 +45,23 @@ impl DataSection {
             payload: payload,
         })
     }
+
+    /// dataの個数を返す
+    pub fn get_num_data_segments(&self) -> u32 {
+        self.payload.count
+    }
+
+    /// dataセグメントのリストを返す
+    pub fn get_data_segment_list(&self) -> Vec<&DataSegment> {
+        self.payload.entries.iter().collect()
+    }
+
+    // Utilities
+
+    /// idx番目のdataセグメント
+    pub fn get_data_segment(&self, idx: usize) -> Option<&DataSegment> {
+        self.payload.entries.get(idx)
+    }
 }
 
 impl Sizeof for DataSection {
@@ -53,6 +70,12 @@ impl Sizeof for DataSection {
         let sizeof_payload = self.payload.sizeof();
 
         sizeof_common + sizeof_payload
+    }
+}
+
+impl SectionCommonInterface for DataSection {
+    fn get_base(&self) -> &SectionCommon {
+        &self.common
     }
 }
 
@@ -111,6 +134,28 @@ impl DataSegment {
             size: size as VarUInt32,
             data: data,
         })
+    }
+
+    /// 対応する線形メモリのインデックスを返す
+    ///
+    /// Wasm v1のMVPモデルでは、1つで固定
+    pub fn get_memory_index(&self) -> u32 {
+        self.index
+    }
+
+    /// (not implemented) オフセットを返す(予定)
+    pub fn get_offset(&self) -> i32 {
+        panic!("not implemented")
+    }
+
+    /// dataのサイズをを返す
+    pub fn get_data_size(&self) -> u32 {
+        self.size
+    }
+
+    /// dataの実体を返す
+    pub fn get_data(&self) -> Vec<u8> {
+        self.data.clone()
     }
 }
 

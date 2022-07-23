@@ -1,7 +1,7 @@
 use std::io::{Read, Seek};
 use std::str;
 
-use super::base::{ParseError, SectionCommon};
+use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
 use crate::readers::{read_unsigned_leb128, read_x};
 use crate::wasm_components::base::Sizeof;
@@ -9,21 +9,21 @@ use crate::wasm_components::types::{VarUInt32, VarUInt7};
 
 #[derive(Debug)]
 pub struct CustomSection {
-    pub common: SectionCommon,
-    pub payload: Vec<u8>,
+    common: SectionCommon,
+    payload: Vec<u8>,
 }
 
 #[derive(Debug)]
 pub struct NameSection {
-    pub common: SectionCommon,
-    pub payload: NameSectionPayload,
+    common: SectionCommon,
+    payload: NameSectionPayload,
 }
 
 #[derive(Debug)]
 pub struct NameSectionPayload {
-    pub name: VarUInt7,
-    pub name_payload_len: VarUInt32,
-    pub name_payload_data: Vec<u8>, // Parse for name_payload_data is not implementd yet
+    name: VarUInt7,
+    name_payload_len: VarUInt32,
+    name_payload_data: Vec<u8>, // Parse for name_payload_data is not implementd yet
 }
 
 impl CustomSection {
@@ -68,6 +68,12 @@ impl CustomSection {
             common: common,
             payload: payload,
         })
+    }
+}
+
+impl SectionCommonInterface for CustomSection {
+    fn get_base(&self) -> &SectionCommon {
+        &self.common
     }
 }
 

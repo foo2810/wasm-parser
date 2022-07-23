@@ -1,6 +1,6 @@
 use std::io::{Read, Seek};
 
-use super::base::{ParseError, SectionCommon};
+use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
 use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
 use crate::wasm_components::base::Sizeof;
@@ -8,20 +8,20 @@ use crate::wasm_components::types::{GlobalType, InitExpr, VarUInt32};
 
 #[derive(Debug)]
 pub struct GlobalSection {
-    pub common: SectionCommon,
-    pub payload: GlobalSectionPayload,
+    common: SectionCommon,
+    payload: GlobalSectionPayload,
 }
 
 #[derive(Debug)]
 pub struct GlobalSectionPayload {
-    pub count: VarUInt32,
-    pub globals: Vec<GlobalVariable>,
+    count: VarUInt32,
+    globals: Vec<GlobalVariable>,
 }
 
 #[derive(Debug)]
 pub struct GlobalVariable {
-    pub type_: GlobalType,
-    pub init: InitExpr,
+    type_: GlobalType,
+    init: InitExpr,
 }
 
 impl GlobalSection {
@@ -43,6 +43,29 @@ impl GlobalSection {
             payload: payload,
         })
     }
+
+    // GlobalVariableのリストのサイズ
+    pub fn get_num_globals(&self) -> u32 {
+        self.payload.count
+    }
+
+    /// GlobalVariableのリストを返す
+    pub fn get_global_variable_list(&self) -> Vec<&GlobalVariable> {
+        self.payload.globals.iter().collect()
+    }
+
+    // Utilities
+
+    /// idx番目のGlobalVariableを返す
+    pub fn get_global_variable(&self, idx: usize) -> Option<&GlobalVariable> {
+        self.payload.globals.get(idx)
+    }
+
+    /// idx番目のGlobalVariableの型情報(GlobalType)を返す
+    pub fn get_global_variable_type(&self, idx: usize) -> Option<&GlobalType> {
+        let gv = self.payload.globals.get(idx)?;
+        Some(gv.get_global_type())
+    }
 }
 
 impl Sizeof for GlobalSection {
@@ -51,6 +74,12 @@ impl Sizeof for GlobalSection {
         let sizeof_payload = self.payload.sizeof();
 
         sizeof_common + sizeof_payload
+    }
+}
+
+impl SectionCommonInterface for GlobalSection {
+    fn get_base(&self) -> &SectionCommon {
+        &self.common
     }
 }
 
@@ -92,6 +121,12 @@ impl GlobalVariable {
             init: init_expr,
         })
     }
+
+    pub fn get_global_type(&self) -> &GlobalType {
+        &self.type_
+    }
+
+    // pub fn get_initial(&self);
 }
 
 impl Sizeof for GlobalVariable {

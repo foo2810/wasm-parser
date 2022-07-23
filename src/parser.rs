@@ -127,7 +127,7 @@ impl<'a, R: Read + Seek> Parser<'a, R> {
                     // println!("CodeSection:\n{:?}\n", code_section);
                     println!(
                         "CodeSection: ({} bytes)\nCodeSection {{ id: {}, payload_len: {} }}\nSkip (too large)\n",
-                        code_section.sizeof(), code_section.common.id, code_section.common.payload_len
+                        code_section.sizeof(), code_section.get_id(), code_section.get_payload_len()
                     );
                     module.code_section = Some(code_section);
                 }
@@ -136,7 +136,7 @@ impl<'a, R: Read + Seek> Parser<'a, R> {
                     // println!("DataSection:\n{:?}\n", data_section);
                     println!(
                         "DataSection: ({} bytes)\nDataSection {{ id: {}, payload_len: {} }}\nSkip (too large)\n",
-                        data_section.sizeof(), data_section.common.id, data_section.common.payload_len
+                        data_section.sizeof(), data_section.get_id(), data_section.get_payload_len()
                     );
                     module.data_section = Some(data_section);
                 }
@@ -146,7 +146,7 @@ impl<'a, R: Read + Seek> Parser<'a, R> {
                     println!(
                         "CustomSection: ({} bytes) '{:?}'\nSkip (too large and not parsed)\n",
                         custom_section.sizeof(),
-                        custom_section.common.name
+                        custom_section.get_name()
                     );
                     module.custom_sections.push(custom_section);
                 }

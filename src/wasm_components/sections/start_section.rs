@@ -1,6 +1,6 @@
 use std::io::{Read, Seek};
 
-use super::base::{ParseError, SectionCommon};
+use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
 use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
 use crate::wasm_components::base::Sizeof;
@@ -8,13 +8,13 @@ use crate::wasm_components::types::VarUInt32;
 
 #[derive(Debug)]
 pub struct StartSection {
-    pub common: SectionCommon,
-    pub payload: StartSectionPayload,
+    common: SectionCommon,
+    payload: StartSectionPayload,
 }
 
 #[derive(Debug)]
 pub struct StartSectionPayload {
-    pub index: VarUInt32,
+    index: VarUInt32,
 }
 
 impl StartSection {
@@ -35,6 +35,17 @@ impl StartSection {
             common: common,
             payload: payload,
         })
+    }
+
+    //// start関数のインデックスを返す
+    pub fn get_start_func_index(&self) -> u32 {
+        self.payload.index
+    }
+}
+
+impl SectionCommonInterface for StartSection {
+    fn get_base(&self) -> &SectionCommon {
+        &self.common
     }
 }
 
