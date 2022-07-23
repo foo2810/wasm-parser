@@ -1,3 +1,4 @@
+use std::fmt;
 use std::io::Read;
 
 use crate::readers::usage_bytes_leb128_u;
@@ -47,6 +48,21 @@ impl LangTypes {
     }
 }
 
+impl fmt::Display for LangTypes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let type_str = match self {
+            LangTypes::I32 => "i32",
+            LangTypes::I64 => "i64",
+            LangTypes::F32 => "f32",
+            LangTypes::F64 => "f64",
+            LangTypes::ANYFUNC => "anyfunc",
+            LangTypes::FUNC => "func",
+            LangTypes::PSEUDO => "pseudo",
+        };
+        write!(f, "{}", type_str)
+    }
+}
+
 // pub type ValueType = LangTypes;
 #[derive(Debug)]
 pub struct ValueType {
@@ -89,6 +105,12 @@ impl Sizeof for ValueType {
     }
 }
 
+impl fmt::Display for ValueType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
 // pub type BlockType = LangTypes;
 #[derive(Debug)]
 pub struct BlockType {
@@ -123,6 +145,12 @@ impl BlockType {
 impl Sizeof for BlockType {
     fn sizeof(&self) -> u32 {
         1
+    }
+}
+
+impl fmt::Display for BlockType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.value)
     }
 }
 
@@ -162,6 +190,12 @@ impl ElemType {
 impl Sizeof for ElemType {
     fn sizeof(&self) -> u32 {
         1
+    }
+}
+
+impl fmt::Display for ElemType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.value)
     }
 }
 
@@ -256,6 +290,35 @@ impl Sizeof for FuncType {
     }
 }
 
+impl fmt::Display for FuncType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let param_types = self.get_param_types();
+        let return_type = self.get_return_type();
+
+        match return_type {
+            Some(rty) => write!(
+                f,
+                "({}) -> {}",
+                param_types
+                    .iter()
+                    .map(|v| v.get_value().to_string())
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                rty.get_value().to_string()
+            ),
+            None => write!(
+                f,
+                "({}) -> ()",
+                param_types
+                    .iter()
+                    .map(|v| v.get_value().to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct GlobalType {
     content_type: ValueType,
@@ -294,6 +357,13 @@ impl Sizeof for GlobalType {
         let sizeof_mutability: u32 = 1;
 
         sizeof_content_type + sizeof_mutability
+    }
+}
+
+impl fmt::Display for GlobalType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut_str = if self.mutability == 1 { "mut " } else { "" };
+        write!(f, "{}{}", mut_str, self.content_type)
     }
 }
 
@@ -337,6 +407,12 @@ impl Sizeof for TableType {
     }
 }
 
+impl fmt::Display for TableType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} ({})", self.element_type, self.limits)
+    }
+}
+
 #[derive(Debug)]
 pub struct MemoryType {
     limits: ResizableLimits,
@@ -356,6 +432,12 @@ impl MemoryType {
 impl Sizeof for MemoryType {
     fn sizeof(&self) -> u32 {
         self.limits.sizeof()
+    }
+}
+
+impl fmt::Display for MemoryType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "memory ({})", self.limits)
     }
 }
 
@@ -423,6 +505,18 @@ impl Sizeof for ResizableLimits {
     }
 }
 
+impl fmt::Display for ResizableLimits {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let max_str = if self.flags == 1 {
+            self.maximum.unwrap().to_string()
+        } else {
+            String::from("...")
+        };
+
+        write!(f, "{} - {}", self.initial, max_str)
+    }
+}
+
 // Single byte
 #[derive(Debug)]
 pub enum ExternalKind {
@@ -451,6 +545,17 @@ impl ExternalKind {
 impl Sizeof for ExternalKind {
     fn sizeof(&self) -> u32 {
         1
+    }
+}
+
+impl fmt::Display for ExternalKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ExternalKind::Function => write!(f, "{}", "Function"),
+            ExternalKind::Table => write!(f, "{}", "Table"),
+            ExternalKind::Memory => write!(f, "{}", "Memory"),
+            ExternalKind::Global => write!(f, "{}", "Global"),
+        }
     }
 }
 
