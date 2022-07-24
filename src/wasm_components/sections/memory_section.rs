@@ -23,7 +23,9 @@ impl MemorySection {
         // Common reading in all sections //
         let common = SectionCommon::parse(reader)?;
         if common.id != 5 {
-            panic!("This Section is not MemorySection")
+            return Err(ParseError::FormatError(String::from(
+                "This Section is not MemorySection",
+            )));
         }
         // ここまで共通 //
         let payload = MemorySectionPayload::parse(reader)?;
