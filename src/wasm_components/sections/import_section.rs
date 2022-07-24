@@ -1,4 +1,4 @@
-use std::io::{Read, Seek};
+use std::io::Read;
 use std::str;
 
 use super::base::{ParseError, SectionCommon, SectionCommonInterface};
@@ -38,11 +38,10 @@ pub enum TypeEntry {
 }
 
 impl ImportSection {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         // Common reading in all sections
         let common = SectionCommon::parse(reader)?;
         if common.id != 2 {
-            // panic!("This Section is not ImportSection")
             return Err(ParseError::FormatError(String::from(
                 "This Section is not ImportSection",
             )));

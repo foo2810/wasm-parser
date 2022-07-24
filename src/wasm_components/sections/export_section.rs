@@ -1,4 +1,4 @@
-use std::io::{Read, Seek};
+use std::io::Read;
 use std::str;
 
 use super::base::{ParseError, SectionCommon, SectionCommonInterface};
@@ -27,11 +27,10 @@ pub struct ExportEntry {
 }
 
 impl ExportSection {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         // Common reading in all sections
         let common = SectionCommon::parse(reader)?;
         if common.id != 7 {
-            // panic!("This Section is not ExportSection");
             return Err(ParseError::FormatError(String::from(
                 "This Section is not ExportSection",
             )));
@@ -80,7 +79,7 @@ impl SectionCommonInterface for ExportSection {
 }
 
 impl ExportSectionPayload {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
         match read_unsigned_leb128(reader, &mut count) {
             Ok(_rs) => (/* To check read size */),
@@ -109,7 +108,7 @@ impl Sizeof for ExportSectionPayload {
 }
 
 impl ExportEntry {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut field_len = 0;
         match read_unsigned_leb128(reader, &mut field_len) {
             Ok(_rs) => (/* To check read size */),

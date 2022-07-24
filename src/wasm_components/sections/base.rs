@@ -1,4 +1,4 @@
-use std::io::{Read, Seek};
+use std::io::Read;
 
 use super::{
     CodeSection, CustomSection, DataSection, ElementSection, ExportSection, FunctionSection,
@@ -8,20 +8,6 @@ use super::{
 use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
 use crate::wasm_components::base::Sizeof;
 use crate::wasm_components::types::*;
-
-#[macro_export]
-macro_rules! create_section_struct {
-    ($name:ident) => {
-        #[derive(Debug)]
-        pub struct $name {
-            id: u8,
-            payload_len: u32,
-            name_len: Option<u32>,
-            name: Option<String>,
-            payload: Vec<u8>,
-        }
-    };
-}
 
 #[derive(Debug)]
 pub enum Section {
@@ -72,8 +58,7 @@ pub struct SectionCommon {
 }
 
 impl SectionCommon {
-    // pub fn SectionCommon<R: Read + Seek>(
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<SectionCommon, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<SectionCommon, ParseError> {
         let mut id = 0; // VarUInt7
         match read_unsigned_leb128(reader, &mut id) {
             Ok(_rs) => (/* To check read size */),

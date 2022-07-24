@@ -1,4 +1,4 @@
-use std::io::{Read, Seek};
+use std::io::Read;
 
 use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 use crate::readers::{read_unsigned_leb128, usage_bytes_leb128_u};
@@ -19,11 +19,10 @@ pub struct CodeSectionPayload {
 }
 
 impl CodeSection {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         // Common reading in all sections
         let common = SectionCommon::parse(reader)?;
         if common.id != 10 {
-            // panic!("This Section is not CodeSection");
             return Err(ParseError::FormatError(String::from(
                 "This Section is not CodeSection",
             )));
@@ -72,7 +71,7 @@ impl SectionCommonInterface for CodeSection {
 }
 
 impl CodeSectionPayload {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut count = 0;
         match read_unsigned_leb128(reader, &mut count) {
             Ok(_rs) => (/* To check read size */),

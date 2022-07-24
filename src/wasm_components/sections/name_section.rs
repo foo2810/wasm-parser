@@ -168,7 +168,7 @@ impl Sizeof for NameSectionPayload {
 }
 
 impl ModuleName {
-    pub fn parse<R: Read + Seek>(
+    pub fn parse<R: Read>(
         reader: &mut R,
         name_type: VarUInt7,
         name_payload_len: VarUInt32,
@@ -225,7 +225,7 @@ impl Sizeof for ModuleName {
 }
 
 impl FunctionNames {
-    pub fn parse<R: Read + Seek>(
+    pub fn parse<R: Read>(
         reader: &mut R,
         name_type: VarUInt7,
         name_payload_len: VarUInt32,
@@ -263,7 +263,7 @@ impl Sizeof for FunctionNames {
 }
 
 impl LocalNames {
-    pub fn parse<R: Read + Seek>(
+    pub fn parse<R: Read>(
         reader: &mut R,
         name_type: VarUInt7,
         name_payload_len: VarUInt32,
@@ -316,7 +316,7 @@ impl Sizeof for LocalNames {
 }
 
 impl LocalName {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut index: u64 = 0;
         match read_unsigned_leb128(reader, &mut index) {
             Ok(_rs) => (/* To check read size */),
@@ -352,7 +352,7 @@ impl Sizeof for LocalName {
 }
 
 impl NameMap {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
         match read_unsigned_leb128(reader, &mut count) {
             Ok(_rs) => (/* To check read size */),
@@ -389,7 +389,7 @@ impl Sizeof for NameMap {
 }
 
 impl Naming {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut index: u64 = 0;
         match read_unsigned_leb128(reader, &mut index) {
             Ok(_rs) => (/* To check read size */),

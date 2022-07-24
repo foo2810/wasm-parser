@@ -1,4 +1,4 @@
-use std::io::{Read, Seek};
+use std::io::Read;
 
 use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
@@ -25,11 +25,10 @@ pub struct GlobalVariable {
 }
 
 impl GlobalSection {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         // Common reading in all sections //
         let common = SectionCommon::parse(reader)?;
         if common.id != 6 {
-            // panic!("This Section is not GlobalSection")
             return Err(ParseError::FormatError(String::from(
                 "This Section is not GlobalSection",
             )));
@@ -84,7 +83,7 @@ impl SectionCommonInterface for GlobalSection {
 }
 
 impl GlobalSectionPayload {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
         match read_unsigned_leb128(reader, &mut count) {
             Ok(_rs) => (/* To check read size */),
@@ -112,7 +111,7 @@ impl Sizeof for GlobalSectionPayload {
 }
 
 impl GlobalVariable {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let global_type = GlobalType::parse(reader)?;
         let init_expr = InitExpr::parse(reader)?;
 

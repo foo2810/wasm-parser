@@ -1,4 +1,4 @@
-use std::io::{Read, Seek};
+use std::io::Read;
 
 use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
@@ -19,11 +19,10 @@ pub struct TypeSectionPayload {
 }
 
 impl TypeSection {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         // Common reading in all sections //
         let common = SectionCommon::parse(reader)?;
         if common.id != 1 {
-            // panic!("This Section is not TypeSection")
             return Err(ParseError::FormatError(String::from(
                 "This Section is not TypeSection",
             )));

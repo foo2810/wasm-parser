@@ -24,7 +24,6 @@ impl CustomSection {
     pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
         let mut common = SectionCommon::parse(reader)?;
         if common.id != 0 {
-            // panic!("This Section is not CustomSection");
             return Err(ParseError::FormatError(String::from(
                 "This Section is not CustomSection",
             )));

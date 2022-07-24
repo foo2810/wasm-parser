@@ -1,4 +1,4 @@
-use std::io::{Read, Seek};
+use std::io::Read;
 
 use super::base::{ParseError, SectionCommon, SectionCommonInterface};
 
@@ -19,11 +19,10 @@ pub struct TableSectionPayload {
 }
 
 impl TableSection {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         // Common reading in all sections //
         let common = SectionCommon::parse(reader)?;
         if common.id != 4 {
-            // panic!("This Section is not TableSection")
             return Err(ParseError::FormatError(String::from(
                 "This Section is not TableSection",
             )));
@@ -74,7 +73,7 @@ impl SectionCommonInterface for TableSection {
 }
 
 impl TableSectionPayload {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut count: u64 = 0;
         match read_unsigned_leb128(reader, &mut count) {
             Ok(_rs) => (/* To check read size */),

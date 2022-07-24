@@ -29,15 +29,6 @@ struct CmdArgs {
 
     // Positional arg
     path: String,
-    //
-    // Optional arg
-    // #[clap(short = 'n', long = "name")]
-    // name: Option<String>,
-
-    // Required arg
-    // #[clap(short = 'c', long = "count", default_value="Alice")]  // ここでもdefaultを設定できるっぽい:
-    // #[clap(short = 'c', long = "count")]
-    // count: i32,
 }
 
 #[derive(clap::ArgEnum, Clone, Debug)]
@@ -50,15 +41,8 @@ enum Action {
 fn main() {
     let args = CmdArgs::parse();
 
-    // let path = Path::new("wasm_sample/sample.wasm");
-    // let path = Path::new("wasm_sample/rust-wasm.wasm");
     let path = Path::new(args.path.as_str());
 
-    // File open
-    // let file = match File::open(path) {
-    //     Ok(file) => file,
-    //     Err(err) => panic!("could not open {}: {}", display, err),
-    // };
     let file = File::open(path).unwrap();
 
     let mut reader = BufReader::new(file);
@@ -95,9 +79,11 @@ fn subcommand_print(wasm_module: &WasmModule) {
     printer::print_data_section(&wasm_module);
     printer::print_custom_sections(&wasm_module);
 
-    // printer::print_all_section_for_debug(&wasm_module);
+    if false {
+        printer::print_all_section_for_debug(&wasm_module);
+    }
 }
 
-fn subcommand_dump(wasm_module: &WasmModule) {
+fn subcommand_dump(_wasm_module: &WasmModule) {
     println!("to be implemented")
 }

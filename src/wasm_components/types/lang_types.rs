@@ -201,7 +201,7 @@ impl fmt::Display for ElemType {
 
 #[derive(Debug)]
 pub struct FuncType {
-    form: VarInt7,
+    _form: VarInt7,
     param_count: VarUInt32,
     param_types: Vec<ValueType>,
     return_count: VarUInt1,
@@ -241,7 +241,7 @@ impl FuncType {
         }
 
         Ok(Self {
-            form: form as VarInt7,
+            _form: form as VarInt7,
             param_count: param_count as VarUInt32,
             param_types: param_types,
             return_count: return_count as VarUInt1,

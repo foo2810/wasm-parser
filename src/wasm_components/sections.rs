@@ -1,5 +1,3 @@
-// https://stackoverflow.com/questions/26731243/how-do-i-use-a-macro-across-module-files
-#[macro_use]
 mod base;
 
 mod code_section;

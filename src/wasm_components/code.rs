@@ -1,4 +1,4 @@
-use std::io::{Read, Seek};
+use std::io::Read;
 
 use crate::readers::usage_bytes_leb128_u;
 use crate::readers::{read_8, read_unsigned_leb128, read_x};
@@ -21,7 +21,7 @@ pub struct FunctionBody {
     local_count: VarUInt32,
     locals: Vec<LocalEntry>,
     code: Vec<u8>,
-    end: u8, // 0x0B = 'end' instruction
+    _end: u8, // 0x0B = 'end' instruction
 }
 
 #[derive(Debug)]
@@ -48,36 +48,24 @@ impl Sizeof for Expr {
 }
 
 impl FunctionBody {
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self, ParseError> {
-        // body_sizeはFunctionBodyのbody_sizeフィールドを除く部分のバイト数を表す
+    pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
         let mut body_size: u64 = 0; // VarUInt32
         match read_unsigned_leb128(reader, &mut body_size) {
             Ok(_rs) => (/* To check read size */),
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
-        // let s_offset = reader.seek(SeekFrom::Current(0)).unwrap();
-        // let local_count = leb128::read::unsigned(reader).unwrap() as VarUInt32;
         let mut local_count: u64 = 0; // VarUInt32
         let sizeof_local_count: i64;
         match read_unsigned_leb128(reader, &mut local_count) {
             Ok(rs) => sizeof_local_count = rs as i64,
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
-        // let e_offset = reader.seek(SeekFrom::Current(0)).unwrap();
-
-        // local_countの値が格納されているバイト数を計算する。
-        // LEB128では値の大きさによって使用するバイト数が異なるため、
-        // readerのカーソルの位置から強引に計算する。
-        // let sizeof_local_count = (e_offset - s_offset) as i64;
 
         let mut locals: Vec<LocalEntry> = Vec::new();
-        // let s_offset = reader.seek(SeekFrom::Current(0)).unwrap();
         for _ in 0..local_count {
             locals.push(LocalEntry::parse(reader)?);
         }
-        // let e_offset = reader.seek(SeekFrom::Current(0)).unwrap();
-        // let sizeof_locals = (e_offset - s_offset) as i64; // sizeof_local_countと同様
         let sizeof_locals: i64 = locals.iter().map(|x| -> i64 { x.sizeof() as i64 }).sum();
 
         // code_size = body_size - sizeof(local_count)- sizeof(locals) - sizeof(end)
@@ -93,9 +81,7 @@ impl FunctionBody {
             Err(err) => return Err(ParseError::ReaderError(format!("{:?}", err))),
         };
 
-        // for debug
         if end != 0x0B {
-            // panic!("FunctionBody.end is invalid: {:?}", end);
             return Err(ParseError::FormatError(format!(
                 "FunctionBody.end is invalid: {:?}",
                 end
@@ -107,7 +93,7 @@ impl FunctionBody {
             local_count: local_count as VarUInt32,
             locals: locals,
             code: code,
-            end: end,
+            _end: end,
         })
     }
 
@@ -130,7 +116,6 @@ impl Sizeof for FunctionBody {
 
 impl LocalEntry {
     pub fn parse<R: Read>(reader: &mut R) -> Result<Self, ParseError> {
-        // let count = leb128::read::unsigned(reader).unwrap() as VarUInt32;
         let mut count = 0; // VarUInt32
         match read_unsigned_leb128(reader, &mut count) {
             Ok(_rs) => (/* To check read size */),
