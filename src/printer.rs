@@ -1,4 +1,6 @@
-use wasmdump::wasm_components::sections::{SectionCommonInterface, TypeEntry};
+use wasmdump::wasm_components::sections::{
+    CustomSectionPayload, SectionCommonInterface, TypeEntry,
+};
 use wasmdump::wasm_components::types::ExternalKind;
 use wasmdump::wasm_components::{base::Sizeof, module::WasmModule};
 
@@ -276,6 +278,56 @@ pub fn print_data_section(wasm_module: &WasmModule) {
     }
 }
 
+pub fn print_custom_sections(wasm_module: &WasmModule) {
+    let custom_sections = wasm_module.get_custom_sections();
+
+    for custom_section in custom_sections.into_iter() {
+        println!(
+            "[Custom Section ({} bytes)] {}",
+            custom_section.sizeof(),
+            custom_section.get_name().unwrap()
+        );
+
+        match custom_section.get_payload() {
+            CustomSectionPayload::Name { payload } => {
+                if let Some(module_name) = payload.get_module_name() {
+                    println!("  {}: (Module) {}", 0, module_name.get_name());
+                }
+
+                if let Some(function_names) = payload.get_function_names() {
+                    let func_map = function_names.get_function_map();
+                    for (cnt, naming) in func_map.get_name_list().into_iter().enumerate() {
+                        println!(
+                            "  {}: (function) {}, index={}",
+                            cnt,
+                            naming.get_name_str(),
+                            naming.get_indice()
+                        );
+                    }
+                }
+
+                if let Some(local_names) = payload.get_local_names() {
+                    let locals = local_names.get_locals();
+                    for local_name in locals.into_iter() {
+                        let func_idx = local_name.get_indice();
+                        let local_map = local_name.get_local_map();
+                        for (cnt, naming) in local_map.get_name_list().into_iter().enumerate() {
+                            println!(
+                                "  {}: (local) {}, func_idx={}, index={}",
+                                cnt,
+                                naming.get_name_str(),
+                                func_idx,
+                                naming.get_indice()
+                            );
+                        }
+                    }
+                }
+            }
+            _ => (),
+        }
+    }
+}
+
 pub fn print_all_section_for_debug(wasm_module: &WasmModule) {
     let magic_and_version = wasm_module.get_magic_and_version();
     println!(
@@ -378,11 +430,22 @@ pub fn print_all_section_for_debug(wasm_module: &WasmModule) {
 
     for custom_section in wasm_module.get_custom_sections().into_iter() {
         // println!("CustomSection:\n{:?}\n", custom_section);
-        println!(
-            "CustomSection: ({} bytes) '{:?}'\nSkip (too large and not parsed)\n",
-            custom_section.sizeof(),
-            custom_section.get_name()
-        );
+        let name = custom_section.get_name().unwrap();
+
+        if name == "name" {
+            println!(
+                "CustomSection: ({} bytes) '{:?}', common_size: {}\nSkip (too large and not parsed)\n",
+                custom_section.sizeof(),
+                name,
+                custom_section.get_base().sizeof()
+            );
+        } else {
+            println!(
+                "CustomSection: ({} bytes) '{:?}'\nSkip (too large and not parsed)\n",
+                custom_section.sizeof(),
+                name
+            );
+        }
     }
 
     println!("\nSizeof WasmModule: {} bytes", wasm_module.sizeof());

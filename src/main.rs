@@ -11,6 +11,7 @@ use std::io::BufReader;
 use std::path::Path;
 
 use wasmdump::parser::Parser as WasmParser;
+use wasmdump::wasm_components::module::WasmModule;
 use wasmdump::wasm_components::sections::ParseError;
 
 use clap::Parser;
@@ -22,6 +23,13 @@ use clap::Parser;
     about = "Parse wasm binary"
 )]
 struct CmdArgs {
+    // Subcommand
+    #[clap(arg_enum, value_parser)]
+    action: Action,
+
+    // Positional arg
+    path: String,
+    //
     // Optional arg
     // #[clap(short = 'n', long = "name")]
     // name: Option<String>,
@@ -30,9 +38,13 @@ struct CmdArgs {
     // #[clap(short = 'c', long = "count", default_value="Alice")]  // ここでもdefaultを設定できるっぽい:
     // #[clap(short = 'c', long = "count")]
     // count: i32,
+}
 
-    // Positional arg
-    path: String,
+#[derive(clap::ArgEnum, Clone, Debug)]
+enum Action {
+    Print,
+    Dump,
+    DumpTmp,
 }
 
 fn main() {
@@ -62,6 +74,15 @@ fn main() {
         },
     };
 
+    match args.action {
+        Action::Print => subcommand_print(&wasm_module),
+        Action::Dump => panic!("not implemented !"),
+        Action::DumpTmp => subcommand_dump(&wasm_module),
+        // _ => panic!("unknown subcommand: {:?}", act),
+    }
+}
+
+fn subcommand_print(wasm_module: &WasmModule) {
     printer::print_type_section(&wasm_module);
     printer::print_import_section(&wasm_module);
     printer::print_function_section(&wasm_module);
@@ -72,6 +93,11 @@ fn main() {
     printer::print_start_section(&wasm_module);
     printer::print_element_section(&wasm_module);
     printer::print_data_section(&wasm_module);
+    printer::print_custom_sections(&wasm_module);
 
     // printer::print_all_section_for_debug(&wasm_module);
+}
+
+fn subcommand_dump(wasm_module: &WasmModule) {
+    println!("to be implemented")
 }
