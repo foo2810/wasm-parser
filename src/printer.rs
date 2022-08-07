@@ -242,17 +242,25 @@ pub fn print_element_section(wasm_module: &WasmModule) {
     let elem_section = elem_section.unwrap();
     println!("[Element Section ({} bytes)]", elem_section.sizeof());
 
-    let elem_entries = elem_section.get_element(0).unwrap().get_elements();
-    let base_func_idx = match wasm_module.get_import_section() {
-        Some(sec) => sec.get_num_import_entries(),
-        None => 0 as u32,
-    };
-    for (cnt, func_idx) in elem_entries.into_iter().enumerate() {
-        let func_idx_rel = func_section
-            .get_indice(func_idx as usize - base_func_idx as usize)
-            .unwrap();
-        let func_type = type_section.get_type(func_idx_rel as usize).unwrap();
-        println!("  {}: {}, func_idx(rel): {}", cnt, func_type, func_idx_rel);
+    for elem_idx in 0..elem_section.get_num_elements() {
+        let elem_entries = elem_section
+            .get_element(elem_idx as usize)
+            .unwrap()
+            .get_elements();
+        let base_func_idx = match wasm_module.get_import_section() {
+            Some(sec) => sec.get_num_import_entries(),
+            None => 0 as u32,
+        };
+        for (cnt, func_idx) in elem_entries.into_iter().enumerate() {
+            let func_idx_rel = func_section
+                .get_indice(func_idx as usize - base_func_idx as usize)
+                .unwrap();
+            let func_type = type_section.get_type(func_idx_rel as usize).unwrap();
+            println!(
+                "  {}-{}: {}, func_idx(rel): {}",
+                elem_idx, cnt, func_type, func_idx_rel
+            );
+        }
     }
 }
 
